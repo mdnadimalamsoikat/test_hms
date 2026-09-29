@@ -1,0 +1,133 @@
+/*
+================================================================================
+ File    : database/11_apex_support/01_apex_support.sql
+ Run As  : HMS_APP     (PHASE 2 - APEX shuru korar AGE ekbar chalan)
+ Purpose : APEX app er jonno helper objects
+           PKG_APP_SESSION  -> login er pore G_ item set, menu permission
+           VW_LOV_*         -> Popup LOV / Select List source
+           VW_APEX_MENU     -> Navigation menu (role onujayi)
+           VW_DASHBOARD_KPI -> Dashboard card
+================================================================================
+*/
+SET DEFINE OFF
+PROMPT >>> APEX support objects ...
+
+CREATE OR REPLACE PACKAGE PKG_APP_SESSION AS
+    -- APEX: Authentication Scheme > Post-Authentication Procedure Name = PKG_APP_SESSION.POST_AUTH
+    PROCEDURE post_auth;
+    -- Authorization Scheme (PL/SQL Function Returning Boolean) theke call
+    FUNCTION can (p_module IN VARCHAR2, p_action IN VARCHAR2 DEFAULT 'VIEW') RETURN BOOLEAN;
+    -- SQL e use korar jonno Y/N version (menu query, report column)
+    FUNCTION can_yn (p_module IN VARCHAR2, p_action IN VARCHAR2 DEFAULT 'VIEW') RETURN VARCHAR2;
+END PKG_APP_SESSION;
+/
+
+CREATE OR REPLACE PACKAGE BODY PKG_APP_SESSION AS
+
+    PROCEDURE post_auth IS
+        l_user HMS_USER%ROWTYPE;
+        l_roles VARCHAR2(1000);
+        l_name  VARCHAR2(300);
+    BEGIN
+        SELECT * INTO l_user FROM HMS_USER WHERE USERNAME = UPPER(V('APP_USER'));
+
+        SELECT LISTAGG(r.ROLE_CODE, ':') WITHIN GROUP (ORDER BY r.ROLE_CODE)
+          INTO l_roles
+          FROM HMS_USER_ROLE ur JOIN HMS_ROLE r ON r.ROLE_ID = ur.ROLE_ID
+         WHERE ur.USER_ID = l_user.USER_ID AND ur.IS_ACTIVE = 'Y' AND r.IS_ACTIVE = 'Y';
+
+        BEGIN
+            SELECT TRIM(FIRST_NAME || ' ' || LAST_NAME) INTO l_name
+              FROM HMS_EMPLOYEE WHERE EMPLOYEE_ID = l_user.EMPLOYEE_ID;
+        EXCEPTION WHEN NO_DATA_FOUND THEN l_name := l_user.USERNAME;
+        END;
+
+        APEX_UTIL.SET_SESSION_STATE('G_USER_ID',     l_user.USER_ID);
+        APEX_UTIL.SET_SESSION_STATE('G_BRANCH_ID',   l_user.BRANCH_ID);
+        APEX_UTIL.SET_SESSION_STATE('G_EMPLOYEE_ID', l_user.EMPLOYEE_ID);
+        APEX_UTIL.SET_SESSION_STATE('G_ROLES',       l_roles);
+        APEX_UTIL.SET_SESSION_STATE('G_FULL_NAME',   l_name);
+        APEX_UTIL.SET_SESSION_STATE('G_FORCE_PWD',   l_user.FORCE_PWD_CHANGE);
+    END post_auth;
+
+    FUNCTION can (p_module IN VARCHAR2, p_action IN VARCHAR2 DEFAULT 'VIEW') RETURN BOOLEAN IS
+    BEGIN
+        RETURN PKG_AUTH.has_permission(V('APP_USER'), p_module, p_action);
+    END can;
+
+    FUNCTION can_yn (p_module IN VARCHAR2, p_action IN VARCHAR2 DEFAULT 'VIEW') RETURN VARCHAR2 IS
+    BEGIN
+        IF PKG_AUTH.has_permission(V('APP_USER'), p_module, p_action) THEN RETURN 'Y'; END IF;
+        RETURN 'N';
+    END can_yn;
+END PKG_APP_SESSION;
+/
+
+-- LOV: sob lookup ekta view e.  WHERE LOOKUP_TYPE = 'BLOOD_GROUP'
+CREATE OR REPLACE VIEW VW_LOV_LOOKUP AS
+SELECT LOOKUP_TYPE, LOOKUP_VALUE AS D, LOOKUP_CODE AS R, DISPLAY_ORDER
+  FROM HMS_LOOKUP_MASTER
+ WHERE IS_ACTIVE = 'Y';
+
+CREATE OR REPLACE VIEW VW_LOV_DEPARTMENT AS
+SELECT DEPT_NAME AS D, DEPT_ID AS R, BRANCH_ID, DEPT_TYPE
+  FROM HMS_DEPARTMENT
+ WHERE IS_ACTIVE = 'Y';
+
+CREATE OR REPLACE VIEW VW_LOV_DOCTOR AS
+SELECT 'Dr. ' || TRIM(e.FIRST_NAME || ' ' || e.LAST_NAME)
+       || NVL2(d.SPECIALIZATION, ' (' || d.SPECIALIZATION || ')', NULL) AS D,
+       d.DOCTOR_ID AS R,
+       e.BRANCH_ID, e.DEPT_ID, d.CONSULTATION_FEE, d.FOLLOWUP_FEE
+  FROM HMS_DOCTOR d
+  JOIN HMS_EMPLOYEE e ON e.EMPLOYEE_ID = d.EMPLOYEE_ID
+ WHERE d.IS_ACTIVE = 'Y';
+
+CREATE OR REPLACE VIEW VW_LOV_PATIENT AS
+SELECT p.MRN || ' - ' || REGEXP_REPLACE(TRIM(p.FIRST_NAME || ' ' || p.LAST_NAME), ' +', ' ')
+       || ' - ' || p.PHONE_PRIMARY AS D,
+       p.PATIENT_ID AS R, p.BRANCH_ID, p.MRN, p.PHONE_PRIMARY
+  FROM HMS_PATIENT p
+ WHERE p.IS_ACTIVE = 'Y';
+
+-- Navigation menu (APEX: Shared Components > Lists > Create > Dynamic, query niche guide e)
+CREATE OR REPLACE VIEW VW_APEX_MENU AS
+SELECT m.MODULE_ID, m.PARENT_MODULE_ID, m.MODULE_CODE, m.MODULE_NAME,
+       m.APEX_PAGE_NO, NVL(m.ICON_CLASS, 'fa-circle-o') AS ICON_CLASS, m.DISPLAY_ORDER
+  FROM HMS_APP_MODULE m
+ WHERE m.IS_ACTIVE = 'Y';
+
+-- Dashboard KPI (branch wise, aj ker)
+CREATE OR REPLACE VIEW VW_DASHBOARD_KPI AS
+SELECT b.BRANCH_ID,
+       (SELECT COUNT(*) FROM HMS_PATIENT p WHERE p.BRANCH_ID = b.BRANCH_ID
+           AND p.REGISTRATION_DATE >= TRUNC(SYSDATE))                           AS NEW_PATIENTS_TODAY,
+       (SELECT COUNT(*) FROM HMS_OPD_VISIT v WHERE v.BRANCH_ID = b.BRANCH_ID
+           AND v.VISIT_DATE = TRUNC(SYSDATE) AND v.VISIT_STATUS <> 'CANCELLED')  AS OPD_TODAY,
+       (SELECT COUNT(*) FROM HMS_OPD_VISIT v WHERE v.BRANCH_ID = b.BRANCH_ID
+           AND v.VISIT_DATE = TRUNC(SYSDATE) AND v.VISIT_STATUS = 'WAITING')    AS OPD_WAITING,
+       (SELECT COUNT(*) FROM HMS_IPD_ADMISSION a WHERE a.BRANCH_ID = b.BRANCH_ID
+           AND a.ADMISSION_STATUS = 'ADMITTED')                                   AS IPD_CURRENT,
+       (SELECT NVL(SUM(AVAILABLE), 0) FROM VW_BED_OCCUPANCY o WHERE o.BRANCH_ID = b.BRANCH_ID) AS BEDS_AVAILABLE,
+       (SELECT NVL(SUM(NET_COLLECTION), 0) FROM VW_DAILY_REVENUE r WHERE r.BRANCH_ID = b.BRANCH_ID
+           AND r.COLLECTION_DATE = TRUNC(SYSDATE))                                AS COLLECTION_TODAY,
+       (SELECT COUNT(DISTINCT ORDER_ID) FROM VW_LAB_PENDING l WHERE l.BRANCH_ID = b.BRANCH_ID) AS LAB_PENDING
+  FROM HMS_BRANCH b;
+
+-- Module -> APEX page mapping (menu link). Page number APEX e je number diben, same rakhun.
+UPDATE HMS_APP_MODULE SET APEX_PAGE_NO = CASE MODULE_CODE
+    WHEN 'DASHBOARD'   THEN 1   WHEN 'PATIENT'   THEN 11  WHEN 'APPOINTMENT' THEN 30
+    WHEN 'OPD'         THEN 20  WHEN 'IPD'       THEN 40  WHEN 'EMERGENCY'   THEN 150
+    WHEN 'LAB'         THEN 50  WHEN 'RADIOLOGY' THEN 160 WHEN 'PHARMACY'    THEN 60
+    WHEN 'OT'          THEN 170 WHEN 'BLOOD_BANK' THEN 180 WHEN 'NURSING'    THEN 190
+    WHEN 'DIET'        THEN 200 WHEN 'BILLING'   THEN 70  WHEN 'ACCOUNTS'    THEN 210
+    WHEN 'INVENTORY'   THEN 220 WHEN 'HR'        THEN 230 WHEN 'INSURANCE'   THEN 240
+    WHEN 'MORTUARY'    THEN 250 WHEN 'REPORTS'   THEN 80  WHEN 'SETUP'       THEN 90
+    WHEN 'SECURITY'    THEN 95  END
+ WHERE APEX_PAGE_NO IS NULL;
+COMMIT;
+
+SELECT OBJECT_NAME, OBJECT_TYPE, STATUS FROM USER_OBJECTS
+ WHERE OBJECT_NAME IN ('PKG_APP_SESSION','VW_LOV_LOOKUP','VW_LOV_DEPARTMENT','VW_LOV_DOCTOR',
+                       'VW_LOV_PATIENT','VW_APEX_MENU','VW_DASHBOARD_KPI')
+ ORDER BY 1, 2;

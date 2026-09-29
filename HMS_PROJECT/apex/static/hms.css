@@ -1,0 +1,58 @@
+/* HMS custom CSS  - Shared Components > Static Application Files e upload
+   Tarpor User Interface Attributes > CSS > File URLs: #APP_FILES#hms.css */
+:root { --hms-primary:#0b6e99; --hms-ok:#2e7d32; --hms-warn:#ef6c00; --hms-danger:#c62828; }
+
+/* Dashboard KPI card */
+.hms-kpi { border-radius:10px; padding:16px; color:#fff; min-height:96px; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+.hms-kpi .hms-kpi-val { font-size:2rem; font-weight:700; line-height:1.1; }
+.hms-kpi .hms-kpi-lbl { font-size:.85rem; opacity:.9; text-transform:uppercase; letter-spacing:.5px; }
+.hms-kpi.blue{background:#0b6e99}.hms-kpi.green{background:#2e7d32}.hms-kpi.orange{background:#ef6c00}
+.hms-kpi.red{background:#c62828}.hms-kpi.purple{background:#6a1b9a}.hms-kpi.teal{background:#00796b}
+
+/* Patient banner (profile / OPD / IPD page er upore) */
+.hms-banner { display:flex; gap:24px; flex-wrap:wrap; background:#eef6fa; border-left:5px solid var(--hms-primary);
+              padding:10px 16px; border-radius:6px; }
+.hms-banner b { color:var(--hms-primary); }
+.hms-allergy { color:#fff; background:var(--hms-danger); padding:2px 8px; border-radius:4px; font-weight:600; }
+
+/* Status badge  <span class="hms-badge WAITING">WAITING</span> */
+.hms-badge { padding:2px 8px; border-radius:10px; font-size:.75rem; font-weight:600; color:#fff; background:#777; }
+.hms-badge.WAITING{background:var(--hms-warn)} .hms-badge.COMPLETED,.hms-badge.PAID{background:var(--hms-ok)}
+.hms-badge.CANCELLED,.hms-badge.DUE{background:var(--hms-danger)} .hms-badge.ADMITTED,.hms-badge.IN_CONSULTATION{background:var(--hms-primary)}
+
+/* Required field star lal */
+.t-Form-fieldContainer.is-required .t-Form-label::after { content:" *"; color:var(--hms-danger); }
+
+@media print { .t-Header,.t-Body-nav,.t-Footer,.t-Button { display:none !important; } }
+
+/* ======================================================================
+   THEME OVERRIDE (Redwood Light e Theme Roller e primary color / radius nai)
+   Ei block Theme Roller > Custom CSS e paste korun, ba ei file upload thakle
+   automatic kaj korbe.
+   ====================================================================== */
+:root {
+  --ut-palette-primary: #0b6e99;
+  --ut-palette-primary-contrast: #ffffff;
+  --ut-palette-primary-shade: #e6f2f7;
+  --a-button-hot-background-color: #0b6e99;
+  --a-button-hot-text-color: #ffffff;
+  --a-button-hot-hover-background-color: #09597c;
+  --ut-link-text-color: #0b6e99;
+  --ut-component-border-radius: 8px;
+  --a-button-border-radius: 8px;
+  --a-field-input-border-radius: 6px;
+}
+/* Body background */
+body, .t-Body, .t-Body-main, .t-Body-content { background-color: #f4f7f9 !important; }
+/* Primary (Hot) button */
+.t-Button--hot, .a-Button--hot { background-color: #0b6e99 !important; border-color: #0b6e99 !important; color: #fff !important; }
+.t-Button--hot:hover, .a-Button--hot:hover { background-color: #09597c !important; }
+/* Rounded card / region */
+.t-Region, .t-Card, .a-CardView-item, .t-Cards-item, .t-IRR-region, .a-IG { border-radius: 8px !important; overflow: hidden; }
+.t-Button, .apex-item-text, .apex-item-select, .apex-item-textarea { border-radius: 6px; }
+/* Side menu selected item */
+.t-TreeNav .a-TreeView-node--topLevel.is-current--top > .a-TreeView-content,
+.t-TreeNav .a-TreeView-content.is-current { background-color: #e6f2f7 !important; color: #0b6e99 !important; }
+.t-TreeNav .a-TreeView-content.is-current .fa { color: #0b6e99 !important; }
+/* Links */
+a { color: #0b6e99; }

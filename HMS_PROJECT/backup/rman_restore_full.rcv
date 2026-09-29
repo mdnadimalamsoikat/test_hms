@@ -1,0 +1,38 @@
+# ============================================================
+#  DISASTER: datafile nosto / DB open hocche na
+#  cmd (Administrator):  set ORACLE_SID=ORCL
+#                        rman target /
+#  Tarpor niche theke dorkari block copy-paste korun.
+# ============================================================
+
+# --- 1) Ki nosto dekhun
+# STARTUP MOUNT;
+# LIST FAILURE;  ADVISE FAILURE;  REPAIR FAILURE PREVIEW;
+# REPAIR FAILURE;          <- RMAN nijei thik korte pare
+
+# --- 2) Ekta datafile nosto (DB open thakte pare)
+# ALTER DATABASE DATAFILE 'D:\APP\ORADATA\ORCL\HMS_DATA01.DBF' OFFLINE;
+# RESTORE DATAFILE 'D:\APP\ORADATA\ORCL\HMS_DATA01.DBF';
+# RECOVER DATAFILE 'D:\APP\ORADATA\ORCL\HMS_DATA01.DBF';
+# ALTER DATABASE DATAFILE 'D:\APP\ORADATA\ORCL\HMS_DATA01.DBF' ONLINE;
+
+# --- 3) Shudhu HMS tablespace
+# ALTER TABLESPACE HMS_DATA OFFLINE IMMEDIATE;
+# RESTORE TABLESPACE HMS_DATA;  RECOVER TABLESPACE HMS_DATA;
+# ALTER TABLESPACE HMS_DATA ONLINE;
+
+# --- 4) PURO DATABASE (sob nosto, ba nirdishto somoye ferot)
+# SHUTDOWN IMMEDIATE;
+# STARTUP MOUNT;
+# RUN {
+#   # SET UNTIL TIME "TO_DATE('2026-09-26 14:35','YYYY-MM-DD HH24:MI')";   <- point-in-time hole
+#   RESTORE DATABASE;
+#   RECOVER DATABASE;
+# }
+# ALTER DATABASE OPEN;                 # normal recovery
+# ALTER DATABASE OPEN RESETLOGS;       # UNTIL TIME use korle
+
+# --- 5) Flashback database (bhul upgrade/script er pore, 24 ghontar moddhe)
+# SHUTDOWN IMMEDIATE; STARTUP MOUNT;
+# FLASHBACK DATABASE TO TIMESTAMP TO_TIMESTAMP('2026-09-26 14:35','YYYY-MM-DD HH24:MI');
+# ALTER DATABASE OPEN RESETLOGS;

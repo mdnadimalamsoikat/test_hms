@@ -1,0 +1,141 @@
+/*
+================================================================================
+ Project   : Hospital Management System (HMS)
+ Database  : Oracle 19c
+ File      : 02_security_tables.sql
+ Purpose   : Tables - SECURITY MODULE (User, Role, Menu Access)
+ Run As    : HMS_APP
+ Generated : 2026-09-26
+================================================================================
+*/
+SET DEFINE OFF
+
+PROMPT >>> Creating tables : SECURITY MODULE (User, Role, Menu Access)
+
+-- ----------------------------------------------------------------------------
+-- HMS_ROLE
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_ROLE (
+    ROLE_ID                NUMBER DEFAULT SEQ_ROLE.NEXTVAL NOT NULL,
+    ROLE_CODE              VARCHAR2(50) NOT NULL,
+    ROLE_NAME              VARCHAR2(200) NOT NULL,
+    ROLE_DESC              VARCHAR2(500),
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_ROLE PRIMARY KEY (ROLE_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_ROLE_CODE UNIQUE (ROLE_CODE)
+)
+TABLESPACE HMS_DATA;
+
+-- ----------------------------------------------------------------------------
+-- HMS_APP_MODULE  : Menu / page list
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_APP_MODULE (
+    MODULE_ID              NUMBER DEFAULT SEQ_APP_MODULE.NEXTVAL NOT NULL,
+    MODULE_CODE            VARCHAR2(50) NOT NULL,
+    MODULE_NAME            VARCHAR2(200) NOT NULL,
+    PARENT_MODULE_ID       NUMBER CONSTRAINT FK_APP_MODULE_PARENT_MODULE_ID REFERENCES HMS_APP_MODULE(MODULE_ID),
+    APEX_PAGE_NO           NUMBER,
+    ICON_CLASS             VARCHAR2(100),
+    DISPLAY_ORDER          NUMBER,
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_APP_MODULE PRIMARY KEY (MODULE_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_MODULE_CODE UNIQUE (MODULE_CODE)
+)
+TABLESPACE HMS_DATA;
+COMMENT ON TABLE HMS_APP_MODULE IS 'Menu / page list';
+
+-- ----------------------------------------------------------------------------
+-- HMS_ROLE_PERMISSION
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_ROLE_PERMISSION (
+    PERMISSION_ID          NUMBER DEFAULT SEQ_ROLE_PERMISSION.NEXTVAL NOT NULL,
+    ROLE_ID                NUMBER NOT NULL CONSTRAINT FK_ROLE_PERMISSION_ROLE_ID REFERENCES HMS_ROLE(ROLE_ID),
+    MODULE_ID              NUMBER NOT NULL CONSTRAINT FK_ROLE_PERMISSION_MODULE_ID REFERENCES HMS_APP_MODULE(MODULE_ID),
+    CAN_VIEW               CHAR(1) DEFAULT 'Y' NOT NULL CHECK (CAN_VIEW IN ('Y','N')),
+    CAN_ADD                CHAR(1) DEFAULT 'N' NOT NULL CHECK (CAN_ADD IN ('Y','N')),
+    CAN_EDIT               CHAR(1) DEFAULT 'N' NOT NULL CHECK (CAN_EDIT IN ('Y','N')),
+    CAN_DELETE             CHAR(1) DEFAULT 'N' NOT NULL CHECK (CAN_DELETE IN ('Y','N')),
+    CAN_PRINT              CHAR(1) DEFAULT 'N' NOT NULL CHECK (CAN_PRINT IN ('Y','N')),
+    CAN_APPROVE            CHAR(1) DEFAULT 'N' NOT NULL CHECK (CAN_APPROVE IN ('Y','N')),
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_ROLE_PERMISSION PRIMARY KEY (PERMISSION_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_ROLE_PERM UNIQUE (ROLE_ID, MODULE_ID)
+)
+TABLESPACE HMS_DATA;
+
+-- ----------------------------------------------------------------------------
+-- HMS_USER
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_USER (
+    USER_ID                NUMBER DEFAULT SEQ_USER.NEXTVAL NOT NULL,
+    EMPLOYEE_ID            NUMBER CONSTRAINT FK_USER_EMPLOYEE_ID REFERENCES HMS_EMPLOYEE(EMPLOYEE_ID),
+    BRANCH_ID              NUMBER NOT NULL CONSTRAINT FK_USER_BRANCH_ID REFERENCES HMS_BRANCH(BRANCH_ID),
+    USERNAME               VARCHAR2(100) NOT NULL,
+    PASSWORD_HASH          VARCHAR2(500) NOT NULL,
+    PASSWORD_SALT          VARCHAR2(200),
+    EMAIL                  VARCHAR2(150),
+    MOBILE                 VARCHAR2(50),
+    LAST_LOGIN             TIMESTAMP,
+    FAILED_ATTEMPTS        NUMBER DEFAULT 0,
+    IS_LOCKED              CHAR(1) DEFAULT 'N' NOT NULL CHECK (IS_LOCKED IN ('Y','N')),
+    PASSWORD_CHANGED_ON    DATE,
+    FORCE_PWD_CHANGE       CHAR(1) DEFAULT 'Y' NOT NULL CHECK (FORCE_PWD_CHANGE IN ('Y','N')),
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_USER PRIMARY KEY (USER_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_USERNAME UNIQUE (USERNAME)
+)
+TABLESPACE HMS_DATA;
+
+-- ----------------------------------------------------------------------------
+-- HMS_USER_ROLE
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_USER_ROLE (
+    USER_ROLE_ID           NUMBER DEFAULT SEQ_USER_ROLE.NEXTVAL NOT NULL,
+    USER_ID                NUMBER NOT NULL CONSTRAINT FK_USER_ROLE_USER_ID REFERENCES HMS_USER(USER_ID),
+    ROLE_ID                NUMBER NOT NULL CONSTRAINT FK_USER_ROLE_ROLE_ID REFERENCES HMS_ROLE(ROLE_ID),
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_USER_ROLE PRIMARY KEY (USER_ROLE_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_USER_ROLE UNIQUE (USER_ID, ROLE_ID)
+)
+TABLESPACE HMS_DATA;
+
+-- ----------------------------------------------------------------------------
+-- HMS_LOGIN_HISTORY
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_LOGIN_HISTORY (
+    LOGIN_ID               NUMBER DEFAULT SEQ_LOGIN_HISTORY.NEXTVAL NOT NULL,
+    USER_ID                NUMBER CONSTRAINT FK_LOGIN_HISTORY_USER_ID REFERENCES HMS_USER(USER_ID),
+    USERNAME               VARCHAR2(100),
+    LOGIN_TIME             TIMESTAMP DEFAULT SYSTIMESTAMP,
+    LOGOUT_TIME            TIMESTAMP,
+    IP_ADDRESS             VARCHAR2(50),
+    BROWSER_INFO           VARCHAR2(500),
+    LOGIN_STATUS           VARCHAR2(20) CHECK (LOGIN_STATUS IN ('SUCCESS','FAILED','LOCKED')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_LOGIN_HISTORY PRIMARY KEY (LOGIN_ID) USING INDEX TABLESPACE HMS_INDEX
+)
+TABLESPACE HMS_DATA;
+

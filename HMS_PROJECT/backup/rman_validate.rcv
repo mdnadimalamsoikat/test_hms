@@ -1,0 +1,5 @@
+# Backup asholei restore-able kina test (kichu restore kore na, shudhu check)
+RESTORE DATABASE VALIDATE;
+RESTORE ARCHIVELOG ALL VALIDATE;
+LIST BACKUP SUMMARY;
+REPORT NEED BACKUP;

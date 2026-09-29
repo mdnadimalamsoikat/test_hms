@@ -1,0 +1,46 @@
+/*
+================================================================================
+ Project   : Hospital Management System (HMS)
+ Database  : Oracle 19c
+ File      : 20_mortuary_tables.sql
+ Purpose   : Tables - MORTUARY
+ Run As    : HMS_APP
+ Generated : 2026-09-26
+================================================================================
+*/
+SET DEFINE OFF
+
+PROMPT >>> Creating tables : MORTUARY
+
+-- ----------------------------------------------------------------------------
+-- HMS_MORTUARY
+-- ----------------------------------------------------------------------------
+CREATE TABLE HMS_MORTUARY (
+    MORTUARY_ID            NUMBER DEFAULT SEQ_MORTUARY.NEXTVAL NOT NULL,
+    BODY_NO                VARCHAR2(30) NOT NULL,
+    PATIENT_ID             NUMBER CONSTRAINT FK_MORTUARY_PATIENT_ID REFERENCES HMS_PATIENT(PATIENT_ID),
+    ADMISSION_ID           NUMBER CONSTRAINT FK_MORTUARY_ADMISSION_ID REFERENCES HMS_IPD_ADMISSION(ADMISSION_ID),
+    DECEASED_NAME          VARCHAR2(200) NOT NULL,
+    DATE_OF_DEATH          TIMESTAMP NOT NULL,
+    CAUSE_OF_DEATH         VARCHAR2(1000),
+    DEATH_CERT_NO          VARCHAR2(50),
+    CERTIFIED_BY           NUMBER CONSTRAINT FK_MORTUARY_CERTIFIED_BY REFERENCES HMS_DOCTOR(DOCTOR_ID),
+    IS_MLC                 CHAR(1) DEFAULT 'N' NOT NULL CHECK (IS_MLC IN ('Y','N')),
+    POSTMORTEM_REQUIRED    CHAR(1) DEFAULT 'N' NOT NULL CHECK (POSTMORTEM_REQUIRED IN ('Y','N')),
+    CHAMBER_NO             VARCHAR2(20),
+    RECEIVED_TIME          TIMESTAMP DEFAULT SYSTIMESTAMP,
+    RELEASED_TIME          TIMESTAMP,
+    RELEASED_TO_NAME       VARCHAR2(200),
+    RELEASED_TO_RELATION   VARCHAR2(50),
+    RELEASED_TO_NID        VARCHAR2(50),
+    BODY_STATUS            VARCHAR2(20) DEFAULT 'IN_MORTUARY' CHECK (BODY_STATUS IN ('IN_MORTUARY','RELEASED','SENT_FOR_PM')),
+    IS_ACTIVE              CHAR(1) DEFAULT 'Y' NOT NULL CHECK (IS_ACTIVE IN ('Y','N')),
+    CREATED_BY             VARCHAR2(100) DEFAULT NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER),
+    CREATED_DATE           TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    UPDATED_BY             VARCHAR2(100),
+    UPDATED_DATE           TIMESTAMP,
+    CONSTRAINT PK_MORTUARY PRIMARY KEY (MORTUARY_ID) USING INDEX TABLESPACE HMS_INDEX,
+    CONSTRAINT UK_BODY_NO UNIQUE (BODY_NO)
+)
+TABLESPACE HMS_DATA;
+
