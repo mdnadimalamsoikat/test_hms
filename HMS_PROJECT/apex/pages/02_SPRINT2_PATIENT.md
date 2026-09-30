@@ -30,6 +30,7 @@ Create Page ▸ **Faceted Search**
 SELECT PATIENT_ID, MRN, PATIENT_NAME, GENDER, AGE, BLOOD_GROUP, PHONE_PRIMARY,
        PATIENT_CATEGORY, REGISTRATION_DATE, TOTAL_OPD_VISITS, CURRENT_ADMISSION_NO,
        TOTAL_DUE, ALLERGIES,
+       CASE WHEN CURRENT_ADMISSION_NO IS NOT NULL THEN 'Y' END ADMITTED_FLAG,
        CASE WHEN TOTAL_DUE > 0 THEN 'u-danger-text' END DUE_CSS,
        UPPER(SUBSTR(PATIENT_NAME,1,1)) NAME_INITIAL,
        CASE WHEN REGISTRATION_DATE >= TRUNC(SYSDATE)    THEN '1. Today'
@@ -50,7 +51,7 @@ Security ▸ Authorization **AUTH_PATIENT**.
 | P11_BLOOD_GROUP | Checkbox Group | BLOOD_GROUP |
 | P11_PATIENT_CATEGORY | Radio Group | PATIENT_CATEGORY |
 | P11_REG_PERIOD | **Checkbox Group** | Label `Registered` ▸ Source Column **REG_PERIOD** ▸ List of Values: **Distinct Values** ▸ (Range facet date e use korben na — ORA-01841 dey) |
-| P11_ADMITTED | Checkbox | Column `CURRENT_ADMISSION_NO` ▸ *Is Not Null* → label "Currently admitted" (Facet ▸ Type Checkbox ▸ LOV Static `Yes;Y`) — optional |
+| P11_ADMITTED | Checkbox Group | Label `Admitted` ▸ Source Column **ADMITTED_FLAG** (SQL te add kora) ▸ List of Values ▸ Type **Static** ▸ **Display Value** `Currently admitted` · **Return Value** `Y` (alada 2 column e likhun, `Yes;Y` ek ghore likhben na) ▸ **Default/Initial selection kichu rakhben na** — optional |
 
 ### Results region → Cards e convert
 Results region select ▸ Type **Cards** ▸ Attributes:
@@ -114,7 +115,7 @@ Sob item: Appearance ▸ Template **Optional - Floating** (required gula **Requi
 | P10_MIDDLE_NAME | Text | No / 3 | |
 | P10_LAST_NAME | Text | No / 3 | |
 | P10_GENDER | **Radio Group** | Yes / 4 | List of Values ▸ Type **SQL Query** ▸ `SELECT D,R FROM VW_LOV_LOOKUP WHERE LOOKUP_TYPE='GENDER' ORDER BY DISPLAY_ORDER` · Display Extra Values **Off** · Display Null Value **Off** · Settings ▸ Number of Columns **3** · Template Options ▸ Item Group Display **Display as Pill Button** · Validation ▸ Value Required **On** |
-| P10_DATE_OF_BIRTH | Date Picker | No / 4 | Settings ▸ Maximum Date `+0d` · Format `DD-MON-YYYY` |
+| P10_DATE_OF_BIRTH | Date Picker | No / 4 | Settings ▸ Maximum Date `+0d` · Format `DD/MM/YYYY` (numeric — month naam/language niye ORA-01843 hobe na) |
 | P10_AGE_YEARS | Number Field | No / 2 | Label `Age (Y)` · Min 0 Max 130 |
 | P10_BLOOD_GROUP | Select List | Yes / 3 | LOOKUP 'BLOOD_GROUP' |
 | P10_MARITAL_STATUS | Select List | No / 3 | LOOKUP 'MARITAL_STATUS' |
@@ -191,7 +192,7 @@ BEGIN
       p_last_name     => :P10_LAST_NAME,
       p_gender        => :P10_GENDER,
       p_phone         => :P10_PHONE_PRIMARY,
-      p_dob           => TO_DATE(:P10_DATE_OF_BIRTH,'DD-MON-YYYY'),
+      p_dob           => TO_DATE(:P10_DATE_OF_BIRTH,'DD/MM/YYYY'),
       p_age_years     => :P10_AGE_YEARS,
       p_blood_group   => :P10_BLOOD_GROUP,
       p_father_name   => :P10_FATHER_NAME,
@@ -239,8 +240,17 @@ END;
 `[DA] Check Duplicate` ▸ Event **Change** ▸ Item P10_PHONE_PRIMARY ▸ Client Condition: JS `$v('P10_PATIENT_ID') === ''` ▸ True: Execute JS `hms.checkDuplicate();`
 
 ### DA — DOB theke age
-`[DA] DOB to Age` ▸ Change ▸ P10_DATE_OF_BIRTH ▸ True: **Set Value** ▸ Type PL/SQL Expression:
-`TRUNC(MONTHS_BETWEEN(SYSDATE, TO_DATE(:P10_DATE_OF_BIRTH,'DD-MON-YYYY'))/12)` ▸ Items to Submit P10_DATE_OF_BIRTH ▸ Affected P10_AGE_YEARS.
+`[DA] DOB to Age` ▸ Event **Change** ▸ Item P10_DATE_OF_BIRTH ▸ **Fire on Initialization = OFF** (page load e chalabe na)
+▸ Client-side Condition: Type **Item is NOT NULL** ▸ Item P10_DATE_OF_BIRTH
+▸ True: **Set Value** ▸ Set Type **PL/SQL Expression**:
+```plsql
+TRUNC(MONTHS_BETWEEN(SYSDATE, TO_DATE(:P10_DATE_OF_BIRTH,'DD/MM/YYYY'))/12)
+```
+▸ Items to Submit `P10_DATE_OF_BIRTH` ▸ Affected Elements ▸ Item `P10_AGE_YEARS` ▸ Suppress Change Event **Yes**.
+
+> ⚠️ **ORA-01843: not a valid month** — karon: `TO_DATE` er format mask (`DD/MM/YYYY`) ar P10_DATE_OF_BIRTH item er **Format Mask** hubohu **ek** hote hobe.
+> Check: Item P10_DATE_OF_BIRTH ▸ Settings ▸ **Format** = `DD/MM/YYYY`. Date picker e `DD-MON-YYYY` thakle jodi session language English na hoy (ba user `DD-Mon` alada lekhe) tahole month mismatch hoy.
+> Je DA age theke kaj kore na, tar Fire on Initialization OFF + NOT NULL condition rakhle page entry te error ashbe na.
 
 ✅ Test: New → MRN-000001 → page 12 · same phone+name+gender → popup · wrong phone → error · edit → save.
 
@@ -266,23 +276,39 @@ EXCEPTION
     APEX_UTIL.REDIRECT_URL(APEX_PAGE.GET_URL(p_page => 11));   -- patient na pele list e ferot
 END;
 ```
-Server-side Condition ▸ Type **Item is NOT NULL** ▸ Item `P12_PATIENT_ID`.
+Server-side Condition ▸ Type **Expression (PL/SQL)** ▸ `REGEXP_LIKE(:P12_PATIENT_ID,'^[0-9]+$')` (ID khali ba `&PATIENT_ID.` er moto text hole ORA-01722 dey, tai number check).
 ⚠️ Page 12 **sorasori Run korben na** (ID chara khule) — Page 11 theke patient card click kore khulun.
 **Page 12 ▸ Pre-Rendering ▸ Branch** (ID chara khulle list e pathabe): Before Header ▸ Branch to Page 11 ▸ Server-side Condition **Item is NULL** `P12_PATIENT_ID`.
 
-### Region 1: Hero / Banner
-Type **Static Content** ▸ Template **Hero** ▸ Title `&P12_NAME.` ▸ Icon `fa-user-circle`
-Text:
+### Region 1: Hero / Banner  (software-look)
+**Hero region** (Static Content):
+- Template **Hero** ▸ Title `&P12_NAME.` ▸ Icon `fa-user-circle`
+- Appearance ▸ **CSS Classes** = `hms-hero`
+- Text (chip style banner — `hms.css` er `.hms-banner` ei HTML er jonno):
 ```html
 <div class="hms-banner">
-  <span><b>MRN</b> &P12_MRN.</span><span><b>Age</b> &P12_AGE.</span>
-  <span><b>Gender</b> &P12_GENDER.</span><span><b>Blood</b> &P12_BLOOD.</span>
-  <span><b>Phone</b> &P12_PHONE.</span><span><b>Due</b> Tk &P12_DUE.</span>
+  <span><b>MRN</b> &P12_MRN.</span>
+  <span><b>Age</b> &P12_AGE.</span>
+  <span><b>Gender</b> &P12_GENDER.</span>
+  <span><b>Blood</b> &P12_BLOOD.</span>
+  <span><i class="fa fa-phone"></i> &P12_PHONE.</span>
+  <span class="hms-due-bad"><b>Due</b> Tk &P12_DUE.</span>
 </div>
 ```
-Sub-region (Static, Template Blank, Condition `:P12_ALLERGIES IS NOT NULL`): `<span class="hms-allergy">⚠ Allergy: &P12_ALLERGIES.</span>`
+Allergy sub-region (Static, Template Blank, Condition `:P12_ALLERGIES IS NOT NULL`): `<span class="hms-allergy">⚠ Allergy: &P12_ALLERGIES.</span>`
 
-**Buttons** (Hero region, Position *Next*/*Edit*):
+**Quick Actions region** (button gula Hero er bhitore na, **alada region e** rakhun — Hero e rakhle button gula chariye jay ar banner er upor overlap kore):
+| Property | Value |
+|---|---|
+| Region | Static Content · Title `Quick Actions` · **Template Blank with Attributes** (ba *Buttons Container*) · **Title display: hidden** |
+| Position | Hero region er **thik niche** (Sequence Hero er pore) · Layout ▸ Start New Row **Yes** · Column Span **12** |
+| Appearance ▸ CSS Classes | `hms-actions` |
+| Button sob | Position **Region Body** (na pele *Next*) · Layout ▸ **Start New Row = No** · **Column Span = Automatic** · Template Options ▸ Width **Auto** · Size **Small/Default** |
+
+> `hms.css` er `.hms-actions` rule button gula ke ek line e, pashapashi, gap diye saje (kono fanka/overlap thakbe na).
+> Button **Hot** shudhu `New OPD Visit` (ekta primary action). Baki sob normal.
+
+**Buttons** (Quick Actions region):
 | Button | Icon | Target | Condition / Auth |
 |---|---|---|---|
 | NEW_VISIT `New OPD Visit` (Hot) | fa-stethoscope | Page 20, `P20_PATIENT_ID=&P12_PATIENT_ID.` | AUTH_OPD_ADD |
@@ -290,6 +316,8 @@ Sub-region (Static, Template Blank, Condition `:P12_ALLERGIES IS NOT NULL`): `<s
 | LAB `Lab Order` | fa-flask | Page 50, `P50_PATIENT_ID` | AUTH_LAB_ADD |
 | EDIT `Edit` | fa-pencil | Page 10, `P10_PATIENT_ID` | AUTH_PATIENT_EDIT |
 | STATEMENT | fa-file-text-o | Page 72, `P72_PATIENT_ID` | AUTH_BILLING |
+
+> Jodi `P12_DUE` = 0 hole due chip e lal na dite chan: Text e `<span class="&P12_DUE_CSS.">` — pore (optional).
 
 ### Region 2: Tabs container
 Type Static Content ▸ Template **Tabs Container** ▸ Template Options ▸ *Remember Active Tab* ▸ Style Simple.
@@ -307,6 +335,12 @@ Protiti Classic Report: Template **Standard**, Pagination 10, "No data found" te
 
 ✅ Test: 11 theke card click → hero te info · allergy add → hero te lal warning · button gula (target page na thakle pore).
 
+## Design polish (Software look)
+1. `hms.css` abar upload (Static Application Files ▸ replace) — **Shared Components ▸ Static Application Files ▸ hms.css ▸ Replace**.
+2. Browser e **Ctrl+F5** (cache clear) dile notun look ashbe: gradient title bar, shadow card, rounded chip banner, hover card, clean tabs/table.
+3. Page 12: Hero region e CSS Class `hms-hero`, buttons alada *Quick Actions* region (`hms-actions`) e.
+4. Jodi kono part pochondo na hoy (jemon title bar er gradient), `hms.css` e `/* --- Page title strip` block ta delete korun.
+
 ## Sprint 2 checklist
 - [ ] 11 search + cards · 10 register (MRN auto) + edit + duplicate · 12 profile tabs
 - [ ] `SELECT * FROM HMS_AUDIT_TRAIL ORDER BY AUDIT_ID DESC` e entry
@@ -317,4 +351,7 @@ Protiti Classic Report: Template **Standard**, Pagination 10, "No data found" te
 |---|---|
 | Page 12 er button (OPD/Admit/Lab) click e error | Oi page gula pore banabo (Sprint 4–7) — thik ache |
 | Save e ORA-20001 | Required field (naam, gender, phone) khali |
+| Page 11 e `Admitted Yes;Y` filter ta tick thake, kono patient dekhay na | Facet P11_ADMITTED: LOV Display `Currently admitted` / Return `Y` alada likhun, column `ADMITTED_FLAG` din, tick uthiye Reset click korun (ba Clear) |
+| Card click e `ORA-01722: invalid number` (process Load Patient) | `P12_PATIENT_ID` e number na, text jacche (`&PATIENT_ID.` substitute hoy ni / vul item naam). Page 11 card Action ▸ Set Items Name `P12_PATIENT_ID` Value `&PATIENT_ID.` dekhun; Session e P12_PATIENT_ID er value check korun |
 | Duplicate popup ashe na | hms.js upload + Ajax process naam `CHECK_DUPLICATE` hubohu |
+| Page 10 open/DOB e `Ajax call returned server error ORA-01843: not a valid month for Set Value` | DA `DOB to Age` — item Format `DD/MM/YYYY` + TO_DATE mask same, Fire on Initialization **OFF**, Client Condition *Item is NOT NULL* (upore DOB to Age section dekhun) |
