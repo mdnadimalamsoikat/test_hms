@@ -166,3 +166,42 @@ a { color: #0b6e99; }
 .t-Body-title .t-BreadcrumbRegion-title, .t-Body-title .t-Body-actions { background:transparent !important; }
 .t-Body-title h1, .t-Body-title .t-BreadcrumbRegion-titleText, .t-Body-title .t-Breadcrumb-label,
 .t-Body-title .t-Header-title, .t-Body-title .t-BreadcrumbRegion-title { color:#fff !important; }
+
+/* ======================================================================
+   v5: SETUP / MASTER PAGES (Sprint 3) — list + modal form look
+   ====================================================================== */
+/* Status badge Active/Inactive/Locked  <span class="hms-badge hms-st-Y">Active</span> */
+.hms-badge.hms-st-Y, .hms-badge.Y { background:#2e7d32; }
+.hms-badge.hms-st-N, .hms-badge.N { background:#9aa7b0; }
+.hms-badge.hms-st-LOCK { background:#c62828; }
+.hms-badge.hms-st-WARN { background:#ef6c00; }
+
+/* Summary strip (Dynamic Content region) */
+.hms-kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:4px; }
+.hms-kpi-row .hms-kpi { min-height:78px; padding:12px 16px; }
+.hms-kpi-row .hms-kpi .hms-kpi-val { font-size:1.6rem; }
+
+/* Interactive Report toolbar + rows */
+.a-IRR-toolbar { background:#fff; border-bottom:1px solid #eef2f5; padding:6px 8px; }
+.a-IRR-table th.a-IRR-header { background:#f1f6f9 !important; color:#33505f; font-weight:600; font-size:.74rem; text-transform:uppercase; letter-spacing:.4px; }
+.a-IRR-table td { padding-top:9px; padding-bottom:9px; }
+.a-IRR-table tr:hover td { background:#f7fbfd; }
+.a-IRR-fixedHeader, .a-IRR-container { border-radius:10px; }
+.a-IRR-searchField, .a-IRR-search-field { border-radius:999px !important; }
+
+/* Modal dialog (901, 911, 951 ...) */
+.ui-dialog.t-Dialog-page--standard, .ui-dialog { border-radius:14px !important; overflow:hidden; box-shadow:0 12px 40px rgba(16,42,67,.25) !important; }
+.ui-dialog .ui-dialog-titlebar { background:linear-gradient(90deg,#0b6e99,#138bb8) !important; border:0 !important; color:#fff !important; }
+.ui-dialog .ui-dialog-title { color:#fff !important; font-weight:600; }
+.ui-dialog .ui-dialog-titlebar-close .ui-icon, .ui-dialog .ui-dialog-titlebar-close .a-Icon { color:#fff !important; }
+.t-Dialog-footer, .t-Dialog-page .t-ButtonRegion--dialogFooter { background:#f7fafc; border-top:1px solid #e3ebf0; }
+.t-Dialog-body { background:#fff; }
+
+/* Switch (Y/N) + Radio pill */
+.apex-item-switch input:checked + label, .a-Switch input:checked + .a-Switch-toggle { background-color:#0b6e99 !important; }
+.apex-item-group--rc .apex-item-option input:checked + label, .t-Form-fieldContainer .a-Button-toggle--pill.is-active { background:#0b6e99 !important; color:#fff !important; border-color:#0b6e99 !important; }
+
+/* Interactive Grid (Role permission, schedule, parameter) */
+.a-GV-headerLabel { font-weight:600; color:#33505f; }
+.a-GV-header { background:#f1f6f9 !important; }
+.a-IG .a-GV-row.is-selected .a-GV-cell, .a-GV-row.is-selected .a-GV-cell { background:#e6f2f7 !important; }
