@@ -129,7 +129,6 @@ a { color: #0b6e99; }
 .t-Body-title::before, .t-Body-title::after,
 .t-Body-titleHeader::before, .t-Body-titleHeader::after,
 .t-Body-main::before, .t-Body-content::before { background-image:none !important; content:none !important; display:none !important; }
-.t-Body-title, .t-Body-titleHeader, .t-Body-title .t-Body-titleInner { background-image:none !important; }
 .t-Body-title { padding-top:6px !important; padding-bottom:10px !important; min-height:0 !important; }
 .t-Body-title h1, .t-Body-title .t-Header-title { font-size:1.5rem; font-weight:700; margin:0; }
 
@@ -157,3 +156,13 @@ a { color: #0b6e99; }
 .t-HeroRegion-buttons { margin-bottom:4px; }
 .t-HeroRegion .row { display:flex !important; flex-wrap:wrap; gap:10px; margin:0 !important; }
 .t-HeroRegion .row > [class*="col-"], .t-HeroRegion .row > .col { width:auto !important; flex:0 0 auto !important; max-width:none !important; margin:0 !important; padding:0 !important; }
+
+/* ---- v4: title strip fix (v2 er background-image:none gradient ke mute diyechilo) ---- */
+.t-Body-title, .t-Body-titleHeader {
+  background-color:#0b6e99 !important;
+  background-image:linear-gradient(90deg,#0b6e99 0%,#138bb8 100%) !important;
+  border:0 !important; box-shadow:none !important; }
+.t-Body-title .t-Body-titleInner, .t-Body-title .t-BreadcrumbRegion, .t-Body-title .t-BreadcrumbRegion-body,
+.t-Body-title .t-BreadcrumbRegion-title, .t-Body-title .t-Body-actions { background:transparent !important; }
+.t-Body-title h1, .t-Body-title .t-BreadcrumbRegion-titleText, .t-Body-title .t-Breadcrumb-label,
+.t-Body-title .t-Header-title, .t-Body-title .t-BreadcrumbRegion-title { color:#fff !important; }
