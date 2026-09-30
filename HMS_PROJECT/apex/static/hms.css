@@ -151,3 +151,9 @@ a { color: #0b6e99; }
 
 /* Due chip */
 .hms-due-bad { background:#fdecea !important; border-color:#f5c2be !important; color:#c62828 !important; font-weight:600; }
+
+/* ---- v3: button row ar chip row er majhe fanka + button gap soman ---- */
+.hms-banner { margin-top:18px !important; }
+.t-HeroRegion-buttons { margin-bottom:4px; }
+.t-HeroRegion .row { display:flex !important; flex-wrap:wrap; gap:10px; margin:0 !important; }
+.t-HeroRegion .row > [class*="col-"], .t-HeroRegion .row > .col { width:auto !important; flex:0 0 auto !important; max-width:none !important; margin:0 !important; padding:0 !important; }
