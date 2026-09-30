@@ -263,7 +263,7 @@ Create Page ▸ **Blank Page** ▸ 12 ▸ `Patient Profile` ▸ Normal ▸ Bread
 Authorization **AUTH_PATIENT** · Page Access Protection **Arguments Must Have Checksum**.
 
 ### Items (hidden)
-`P12_PATIENT_ID` (Hidden, Value Protected, SSP *Checksum Required - Session Level*), `P12_MRN`, `P12_NAME`, `P12_AGE`, `P12_GENDER`, `P12_BLOOD`, `P12_PHONE`, `P12_ALLERGIES`, `P12_DUE`, `P12_ADMISSION` — sob Hidden (position: kono region e, ba Page Items region).
+`P12_PATIENT_ID` (Hidden, Value Protected, SSP *Checksum Required - Session Level*), `P12_MRN`, `P12_NAME`, `P12_AGE`, `P12_GENDER`, `P12_BLOOD`, `P12_PHONE`, `P12_ALLERGIES`, `P12_DUE`, `P12_DUE_CSS`, `P12_ADMISSION` — sob Hidden (position: kono region e, ba Page Items region).
 
 **[Process] Load Patient** (Pre-Rendering ▸ Before Regions, Execute Code):
 ```plsql
@@ -271,6 +271,7 @@ BEGIN
   SELECT MRN, PATIENT_NAME, AGE, GENDER, BLOOD_GROUP, PHONE_PRIMARY, ALLERGIES, TOTAL_DUE, CURRENT_ADMISSION_NO
     INTO :P12_MRN, :P12_NAME, :P12_AGE, :P12_GENDER, :P12_BLOOD, :P12_PHONE, :P12_ALLERGIES, :P12_DUE, :P12_ADMISSION
     FROM VW_PATIENT_SUMMARY WHERE PATIENT_ID = :P12_PATIENT_ID;
+  :P12_DUE_CSS := CASE WHEN NVL(TO_NUMBER(:P12_DUE),0) > 0 THEN 'hms-due-bad' END;   -- due thakle lal chip
 EXCEPTION
   WHEN NO_DATA_FOUND THEN
     APEX_UTIL.REDIRECT_URL(APEX_PAGE.GET_URL(p_page => 11));   -- patient na pele list e ferot
@@ -292,7 +293,7 @@ Server-side Condition ▸ Type **Expression (PL/SQL)** ▸ `REGEXP_LIKE(:P12_PAT
   <span><b>Gender</b> &P12_GENDER.</span>
   <span><b>Blood</b> &P12_BLOOD.</span>
   <span><i class="fa fa-phone"></i> &P12_PHONE.</span>
-  <span class="hms-due-bad"><b>Due</b> Tk &P12_DUE.</span>
+  <span class="&P12_DUE_CSS."><b>Due</b> Tk &P12_DUE.</span>
 </div>
 ```
 Allergy sub-region (Static, Template Blank, Condition `:P12_ALLERGIES IS NOT NULL`): `<span class="hms-allergy">⚠ Allergy: &P12_ALLERGIES.</span>`

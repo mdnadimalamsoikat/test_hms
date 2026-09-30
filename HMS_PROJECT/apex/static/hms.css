@@ -120,3 +120,34 @@ a { color: #0b6e99; }
 
 /* --- Footer --- */
 .t-Footer { background:transparent; color:#7a8d99; font-size:.8rem; }
+
+
+/* ======================================================================
+   POLISH v2  (screenshot feedback)
+   ====================================================================== */
+/* Title strip: niche er rongin pattern chobi lukano + compact */
+.t-Body-title::before, .t-Body-title::after,
+.t-Body-titleHeader::before, .t-Body-titleHeader::after,
+.t-Body-main::before, .t-Body-content::before { background-image:none !important; content:none !important; display:none !important; }
+.t-Body-title, .t-Body-titleHeader, .t-Body-title .t-Body-titleInner { background-image:none !important; }
+.t-Body-title { padding-top:6px !important; padding-bottom:10px !important; min-height:0 !important; }
+.t-Body-title h1, .t-Body-title .t-Header-title { font-size:1.5rem; font-weight:700; margin:0; }
+
+/* Content er charpashe breathing space */
+.t-Body-contentInner { padding:16px 20px !important; }
+
+/* Hero: flat grey icon box -> round blue avatar, compact */
+.t-HeroRegion { background:#fff !important; border:1px solid #e3ebf0 !important; border-radius:12px !important;
+  box-shadow:0 2px 8px rgba(16,42,67,.07) !important; padding:14px 16px !important; margin-bottom:10px; }
+.t-HeroRegion-col--left .t-HeroRegion-icon, .t-HeroRegion-icon { background:linear-gradient(135deg,#0b6e99,#2aa3c9) !important;
+  color:#fff !important; border-radius:50% !important; width:56px; height:56px; }
+.t-HeroRegion-title { font-size:1.6rem; font-weight:700; color:#12303f; margin:0 0 6px; }
+.t-HeroRegion-col--content { padding-left:14px; }
+
+/* Buttons: jekhanei thakuk, ek line e cluster kore rakhe (Hero er bhitore thakleo) */
+.t-HeroRegion-buttons, .t-HeroRegion-col--right { display:flex !important; flex-wrap:wrap; gap:8px; align-items:center; }
+.t-HeroRegion .t-Button-wrap, .t-HeroRegion .t-ButtonRegion-col { width:auto !important; flex:0 0 auto !important; }
+.t-HeroRegion .t-Button { margin:0 !important; border-radius:999px; }
+
+/* Due chip */
+.hms-due-bad { background:#fdecea !important; border-color:#f5c2be !important; color:#c62828 !important; font-weight:600; }
