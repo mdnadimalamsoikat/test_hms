@@ -58,7 +58,9 @@ Shared Components → User Interface Attributes:
 - Navigation Menu: Side, List **HMS Menu**
 - Navigation Bar: user name `&G_FULL_NAME.`, Change Password (page 2), Sign Out
 - CSS File URLs: `#APP_FILES#hms.css` · JS: `#APP_FILES#hms.js`
-- Static Application Files e upload: `apex/static/hms.css`, `apex/static/hms.js`, logo
+- Static Application Files e upload: `apex/static/hms.css` **ar** `apex/static/hms.min.css` (dutoi lagbe), `apex/static/hms.js`, logo
+  - CSS File URL: `#APP_FILES#hms#MIN#.css` (jodi file `static/` folder e thake: `#APP_FILES#static/hms#MIN#.css`) — **#MIN# mane:** normal run e `hms.min.css`, Debug on e `hms.css` load hoy. Tai CSS change korle **duita file-i replace** korben, nahole notun design ashbe na.
+  - `hms.min.css` = `hms.css` er comment/space bad deya version. Repo te duita-i ache; CSS edit korle min abar toiri korun (python/online minifier).
 
 ### 1.3 Globalization (Bangladesh)
 Edit Application Properties → Globalization:
