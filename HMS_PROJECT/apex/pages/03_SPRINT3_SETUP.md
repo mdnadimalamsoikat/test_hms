@@ -3,6 +3,7 @@
 🎯 **Ei sprint e ki hobe:** Department, Doctor, Schedule, Service/Price, User/Role — OPD/Billing/Lab er age ei master data lagbe.
 
 ## Shuru-r age (check)
+- [ ] **DB fix:** `database/11_apex_support/07_default_on_null_ids.sql` run (nahole form save e `ORA-01400: cannot insert NULL into ..._ID`)
 - [ ] Sprint 1 complete
 - [ ] AUTH_SETUP*, AUTH_SECURITY, AUTH_SUPER scheme
 
@@ -255,3 +256,4 @@ Tab 2 (optional): `HMS_LOGIN_HISTORY` report · Tab 3: `HMS_ERROR_LOG` (develope
 | Employee code e gap (EMP-00001, 00003...) | Code Item Default e na, save er somoy *Generate Employee Code* process e (upore) |
 | Date ORA-01843 | Date Picker Format `DD/MM/YYYY` + TO_DATE mask ek |
 | Modal title/color purono | `hms.css` **ar** `hms.min.css` duita-i replace + Ctrl+F5 |
+| Save e `ORA-01400: cannot insert NULL into (...._ID)` | APEX ID e NULL pathay, DEFAULT SEQ.NEXTVAL kaj kore na → `07_default_on_null_ids.sql` run (DEFAULT ON NULL) |

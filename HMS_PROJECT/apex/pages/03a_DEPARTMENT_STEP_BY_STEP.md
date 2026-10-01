@@ -2,6 +2,12 @@
 
 > Page Group `Setup` toiri hoye geche ✅. Ekhon thik ei order e korun. Kono step e atke gele **screenshot** pathan.
 
+## PART 0 — ⚠️ Age ekbar DB fix (ORA-01400: cannot insert NULL into ...DEPT_ID)
+**Karon:** Table e `DEPT_ID DEFAULT SEQ_DEPARTMENT.NEXTVAL` ache, kintu APEX form insert e `DEPT_ID` e **NULL** pathay — tokhon DEFAULT kaj kore na → ORA-01400.
+**Fix:** SQL Developer (HMS_APP) e `database/11_apex_support/07_default_on_null_ids.sql` **Run Script (F5)**. Eta sob table er ID ke `DEFAULT ON NULL SEQ_x.NEXTVAL` banay (Employee, Doctor, Service... sob form e lagbe, tai ekbarei sob thik).
+Output e `Done. Columns changed: N` ar niche `DEFAULT_ON_NULL = YES` dekhben. Tarpor page e abar Save korun — NULL error jabe.
+> Page 901 e `P901_DEPT_ID` item **Source ▸ Type = Database Column** ▸ Column `DEPT_ID` ▸ **Primary Key** thakbe (wizard nijei dey) — eta thik ache.
+
 ## PART A — Page toiri (wizard)
 1. App Builder ▸ **Application 101** ▸ **Create Page** (sobuj button).
 2. Page type: **Report** ▸ **Interactive Report** ▸ Next.
