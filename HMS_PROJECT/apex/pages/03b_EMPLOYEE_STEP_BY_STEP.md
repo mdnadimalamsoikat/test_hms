@@ -125,7 +125,7 @@ Type **Expression** (PL/SQL) · `REGEXP_LIKE(REPLACE(REPLACE(:P911_PHONE,' '),'-
 ## Problem hole
 | Problem | Fix |
 |---|---|
-| ORA-01400 ...EMPLOYEE_ID/CREATED_DATE | `07_default_on_null_ids.sql` run + form e CREATED_*/UPDATED_* item nai check |
+| ORA-01400 ...EMPLOYEE_ID/CREATED_DATE | `07_default_on_null_ids.sql` (Run Script F5, HMS_APP) — ba sudhu: `ALTER TABLE HMS_EMPLOYEE MODIFY (EMPLOYEE_ID DEFAULT ON NULL SEQ_EMPLOYEE.NEXTVAL);` + form e CREATED_*/UPDATED_* item nai check |
 | ORA-01400 ...EMPLOYEE_CODE | Process `Generate Employee Code` er Sequence ARP er **age**, Condition CREATE; Item Save Session State = Yes |
 | ORA-20001 Number series not configured: EMPLOYEE | `SELECT * FROM HMS_NUMBER_SERIES WHERE SERIES_TYPE='EMPLOYEE'` — nai hole `08_master_data/01_insert_core_master.sql` er number series insert run |
 | ORA-02290 check constraint | EMPLOYEE_TYPE / GENDER value guide er static list er hubohu |

@@ -6,7 +6,7 @@
 **Karon:** Table e `DEPT_ID DEFAULT SEQ_DEPARTMENT.NEXTVAL`, `CREATED_DATE DEFAULT SYSTIMESTAMP` — kintu APEX form insert e jei column er item ache tar value **NULL** pathay. Explicit NULL dile Oracle **DEFAULT use kore na** → ORA-01400.
 (Trigger `TRG_AUDIT_COLUMNS` shudhu **UPDATE** e `UPDATED_BY/DATE` boshay. `CREATED_*` er jonno kono insert trigger nai — column DEFAULT i bharsha.)
 
-**Fix 1 (DB, ekbar):** SQL Developer (HMS_APP) e `database/11_apex_support/07_default_on_null_ids.sql` **Run Script (F5)** — sob table er ID, CREATED_DATE, CREATED_BY, IS_ACTIVE (default thaka NOT NULL column) ke `DEFAULT ON NULL` banay. Output: `Done. Columns changed: N`.
+**Fix 1 (DB, ekbar):** SQL Developer (HMS_APP) e `database/11_apex_support/07_default_on_null_ids.sql` **Run Script (F5)** — sob table er ID, CREATED_DATE, CREATED_BY column ke `DEFAULT ON NULL` banay (protita table er alada ALTER, ekta fail korleo baki cholbe). Output: `Done. Columns changed: N`.
 Sudhu ei table e agey korte chaile: 
 ```sql
 ALTER TABLE HMS_DEPARTMENT MODIFY (CREATED_DATE DEFAULT ON NULL SYSTIMESTAMP);
