@@ -68,7 +68,7 @@ SELECT e.EMPLOYEE_ID, e.EMPLOYEE_CODE,
 ### Region 1 — Personal Information
 1. **P911_EMPLOYEE_ID** — Type Hidden · Source ▸ Primary Key Yes.
 2. **P911_BRANCH_ID** — Type Hidden · Default ▸ Type Item ▸ Item `G_BRANCH_ID`.
-3. **P911_EMPLOYEE_CODE** — Type **Display Only** · Label `Employee Code` · Default ▸ Static `(Auto)` · Settings ▸ **Save Session State Yes** · Source ▸ Used **Always, replacing any existing value in session state** · Required Off · Start New Row Yes · Span 3.
+3. **P911_EMPLOYEE_CODE** — Type **Display Only** · Label `Employee Code` · Default ▸ Static `(Auto)` · Required **Off** · Start New Row Yes · Span 3. (Save Session State / Send on Page Submit / Source Used — **kichu bodlate hobe na**; code DB trigger `TRG_AUTO_CODES.sql` boshay.)
 4. **P911_FIRST_NAME** — Text Field · Label `First Name` · Value Required On · Start New Row No · Span 4 · Template Required - Floating.
 5. **P911_LAST_NAME** — Text Field · Label `Last Name` · Start New Row No · Span 5.
 6. **P911_GENDER** — **Radio Group** · Label `Gender` · LOV Type SQL Query `SELECT D, R FROM VW_LOV_LOOKUP WHERE LOOKUP_TYPE='GENDER' ORDER BY DISPLAY_ORDER` · Display Extra Values Off · Display Null Value Off · Settings ▸ Number of Columns 3 · Template Options ▸ Item Group Display **Display as Pill Button** · Start New Row Yes · Span 4.
