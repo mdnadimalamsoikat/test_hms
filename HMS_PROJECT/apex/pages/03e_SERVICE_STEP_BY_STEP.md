@@ -53,3 +53,28 @@ New static region `Charges & Tax` (Static ID `service_charges`, seq 20, template
 
 Dynamic Action `Tax toggle` (Event Change · Item `P921_TAX_APPLICABLE` · Client-side Condition Item = Value `Y`):
 True ▸ **Show** `P921_TAX_PERCENT` (Fire on Initialization **Yes**) · False ▸ **Hide** `P921_TAX_PERCENT` + **Set Value** Static `0`.
+
+## STEP 4 — Region `Lab & Sample` (Static ID `service_lab`, seq 30)
+| Item | Type | Key settings |
+|---|---|---|
+| P921_REPORTING_SECTION | Text Field with Autocomplete | Label `Reporting Section` · LOV SQL (static sections UNION existing `REPORTING_SECTION`) · Search Type Contains & Ignore Case · span 3 · seq 10 |
+| P921_TURN_AROUND_TIME | Text Field | Label `Report Time` · Placeholder `e.g. 4 Hours` · span 3 · seq 20 |
+| P921_SAMPLE_REQUIRED | Switch | Y/N · Default `N` · Required Off · span 3 · seq 30 |
+| P921_SAMPLE_TYPE | Select List | Static: Blood, Urine, Stool, Sputum, Swab, Tissue, Fluid · Null `- Select -` · span 3 · seq 40 |
+
+DA `Sample toggle` (Change on SAMPLE_REQUIRED, condition = `Y`): True ▸ Show SAMPLE_TYPE (init On) · False ▸ Hide (init On) + Clear (init Off).
+Validation `Sample type required` (Expression PL/SQL): `:P921_SAMPLE_REQUIRED = 'N' OR :P921_SAMPLE_TYPE IS NOT NULL` · Error `Please select a Sample Type.` · Item P921_SAMPLE_TYPE.
+
+## STEP 5 — Region `Other Settings` (Static ID `service_other`, seq 40)
+| Item | Type | Key settings |
+|---|---|---|
+| P921_IS_PACKAGE | Switch | Label `Package` · Y/N · Default N · Required Off · Row yes, span 3 · seq 10 |
+| P921_CONSENT_REQUIRED | Switch | Label `Consent Required` · Default N · span 3 · seq 20 |
+| P921_DOCTOR_COMMISSION_APPLICABLE | Switch | Label `Doctor Commission` · Default N · span 3 · seq 30 |
+| P921_GENDER_SPECIFIC | Select List | Label `Gender` · Static: Male→MALE, Female→FEMALE · Null `All (no restriction)` · span 3 · seq 40 |
+| P921_IS_OUTSOURCED | Switch | Label `Outsourced` · Default N · Row yes, span 3 · seq 50 |
+| P921_OUTSOURCE_LAB | Text Field | Label `Outsource Lab` · span 5 · seq 60 |
+| P921_OUTSOURCE_COST | Number Field | Label `Outsource Cost (Tk)` · Format Mask `999G999G990D00` · Min 0 · span 4 · seq 70 |
+
+DA `Outsource toggle` (Change on IS_OUTSOURCED, condition = `Y`): True ▸ Show OUTSOURCE_LAB + OUTSOURCE_COST (init On) · False ▸ Hide (init On) + Clear (init Off).
+Validation `Outsource lab required` (Expression PL/SQL): `:P921_IS_OUTSOURCED = 'N' OR :P921_OUTSOURCE_LAB IS NOT NULL` · Error `Please enter the outsource lab name.` · Item P921_OUTSOURCE_LAB.
