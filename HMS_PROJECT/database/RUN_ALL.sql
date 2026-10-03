@@ -71,6 +71,7 @@ PROMPT [STEP 6/9] Triggers
 @@06_triggers/TRG_PHARMA_SALE_STOCK.sql
 @@06_triggers/TRG_AUDIT_PATIENT.sql
 @@06_triggers/TRG_BILLING_CANCEL_CHECK.sql
+@@06_triggers/TRG_AUTO_CODES.sql
 
 PROMPT [STEP 7/9] Views
 @@07_views/create_all_views.sql

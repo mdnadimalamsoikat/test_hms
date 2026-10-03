@@ -99,17 +99,16 @@ SELECT e.EMPLOYEE_ID, e.EMPLOYEE_CODE,
 | CREATE (`Add Employee`) | Next | Hot · Condition `P911_EMPLOYEE_ID` IS NULL |
 | DELETE | – | **Remove kore din** (employee delete korle doctor/user FK bhenge jay) — **Active switch off** i delete |
 
-**C5. Process — Employee Code auto (ARP er AGE)**
-Processing tab ▸ Processing ▸ right-click ▸ **Create Process**:
-| Property | Value |
-|---|---|
-| Name | `Generate Employee Code` |
-| Type | **Execute Code** |
-| PL/SQL | `:P911_EMPLOYEE_CODE := FN_GET_NEXT_NO(:G_BRANCH_ID,'EMPLOYEE');` |
-| Sequence | **5** (wizard er *Process form Employee* er **age** — oita 10 ba 20 hole thik) |
-| Server-side Condition ▸ When Button Pressed | **CREATE** |
+**C5. Employee Code auto — DB trigger diye (APEX process lagbe na)**
+Karon: APEX process er sequence/condition/session state e gorbor hole code `(Auto)` hoye save hoy. Tai DB trigger-i nirapod:
+1. SQL Developer (HMS_APP) e `database/06_triggers/TRG_AUTO_CODES.sql` **Run Script (F5)**.
+   - Trigger `TRG_EMPLOYEE_CODE_BI`: code `NULL` ba `(Auto)` hole `EMP-00001` boshay.
+   - Trigger `TRG_DOCTOR_CODE_BI`: doctor code `DR-EMP-00001`.
+   - Script er shesh e age save hoye jawa `(Auto)` row ke thik kore dey.
+2. APEX e `Generate Employee Code` process thakle **delete** (ba Server-side Condition ▸ Never) korun.
+3. `P911_EMPLOYEE_CODE` item (Display Only, Default `(Auto)`) jemon ache temni thak — trigger `(Auto)` ke replace kore.
 
-> Item er Default e na, process e rakhar karon: form khulleii number kharach hoy, Cancel korleo (EMP-00001 → 00003 gap).
+> Cancel korle number kharach hoy na, rollback hole number o rollback — gap hoy na.
 
 **C6. Validation — Phone** (Validating ▸ Create Validation):
 Type **Expression** (PL/SQL) · `REGEXP_LIKE(REPLACE(REPLACE(:P911_PHONE,' '),'-'),'^(\+?880)?01[3-9][0-9]{8}$')` · Error `Sothik mobile number din (01XXXXXXXXX)` · Associated Item `P911_PHONE` · When Button CREATE, SAVE.
@@ -126,7 +125,7 @@ Type **Expression** (PL/SQL) · `REGEXP_LIKE(REPLACE(REPLACE(:P911_PHONE,' '),'-
 | Problem | Fix |
 |---|---|
 | ORA-01400 ...EMPLOYEE_ID/CREATED_DATE | `07_default_on_null_ids.sql` (Run Script F5, HMS_APP) — ba sudhu: `ALTER TABLE HMS_EMPLOYEE MODIFY (EMPLOYEE_ID DEFAULT ON NULL SEQ_EMPLOYEE.NEXTVAL);` + form e CREATED_*/UPDATED_* item nai check |
-| ORA-01400 ...EMPLOYEE_CODE | Process `Generate Employee Code` er Sequence ARP er **age**, Condition CREATE; Item Save Session State = Yes |
+| Code `(Auto)` hoye save hoy | `06_triggers/TRG_AUTO_CODES.sql` run (DB trigger code boshay) |
 | ORA-20001 Number series not configured: EMPLOYEE | `SELECT * FROM HMS_NUMBER_SERIES WHERE SERIES_TYPE='EMPLOYEE'` — nai hole `08_master_data/01_insert_core_master.sql` er number series insert run |
 | ORA-02290 check constraint | EMPLOYEE_TYPE / GENDER value guide er static list er hubohu |
 | ORA-01843 not a valid month | Date Picker Format `DD/MM/YYYY` |
