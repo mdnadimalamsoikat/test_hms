@@ -59,40 +59,37 @@ SELECT e.EMPLOYEE_ID, e.EMPLOYEE_CODE,
 1. Wizard er region rename ▸ Title `Personal Information` · Template **Standard**.
 2. Create Region ▸ Title `Job & Bank` · Type **Static Content** · Template **Standard** · Sequence Personal er pore. *(Item gula Personal region theke drag kore ei region e niye jaben — Page Designer e item drag-drop kore region e rakha jay.)*
 
-**C3. Items — sob item Template ▸ `Optional - Floating` (Required gula `Required - Floating`)**
+**C3. Items — protiti item er detail**
+> Item er naam wizard nijei dey (`P911_` + COLUMN). Apnar naam alada hole apnar naam i rakhun, shudhu Process/Validation er code e sei naam boshan.
+> Property Editor er upore **search box** — property naam likhe khujun (`Format Mask`, `Column Span`).
+> Layout: 1 row = 12 ghor. Span 4 = 3 ta item ek row e. Start New Row Yes = notun line e.
+> Sob item **Appearance ▸ Template = `Optional - Floating`** (Required item e `Required - Floating`).
 
-*Region 1: Personal Information*
-| Item | Type | Label | Kora |
-|---|---|---|---|
-| P911_EMPLOYEE_ID | Hidden | – | PK (wizard) |
-| P911_BRANCH_ID | Hidden | – | Default ▸ Item `G_BRANCH_ID` |
-| P911_EMPLOYEE_CODE | **Display Only** | Employee Code | Default Static `(Auto)` · **Settings ▸ Save Session State = Yes** · Source ▸ *Used* **Always, replacing any existing value in session state** · **Required Off** · Span 3 |
-| P911_FIRST_NAME | Text Field | First Name | Required · Start New Row No · Span 4 |
-| P911_LAST_NAME | Text Field | Last Name | Span 5 |
-| P911_GENDER | **Radio Group** | Gender | LOV **SQL**: `SELECT D,R FROM VW_LOV_LOOKUP WHERE LOOKUP_TYPE='GENDER' ORDER BY DISPLAY_ORDER` · Number of Columns 3 · Display Extra/Null **Off** · Template Option *Item Group Display* **Display as Pill Button** · Start New Row Yes · Span 4 |
-| P911_DATE_OF_BIRTH | Date Picker | Date of Birth | **Format `DD/MM/YYYY`** · Max Date `+0d` · Span 4 |
-| P911_BLOOD_GROUP | Select List | Blood Group | LOV SQL `... LOOKUP_TYPE='BLOOD_GROUP'` · Null `- Select -` · Span 4 |
-| P911_NID_NUMBER | Text Field | NID | Span 4 · New Row Yes |
-| P911_PHONE | Text Field (Subtype **Telephone**) | Phone | Required · Placeholder `01XXXXXXXXX` · Span 4 |
-| P911_EMAIL | Text Field (Subtype **Email**) | Email | Span 4 |
-| P911_PRESENT_ADDRESS | Textarea | Present Address | Rows 2 · Span 12 · New Row Yes |
-| P911_PHOTO | **Image Upload** | Photo | Storage **BLOB column specified in Item Source** · MIME Type Column `PHOTO_MIME` · Filename Column `PHOTO_FILENAME` · Display ▸ Preview 120x120 · Max 2MB · New Row Yes · Span 6 |
+### Region 1 — Personal Information
+1. **P911_EMPLOYEE_ID** — Type Hidden · Source ▸ Primary Key Yes.
+2. **P911_BRANCH_ID** — Type Hidden · Default ▸ Type Item ▸ Item `G_BRANCH_ID`.
+3. **P911_EMPLOYEE_CODE** — Type **Display Only** · Label `Employee Code` · Default ▸ Static `(Auto)` · Settings ▸ **Save Session State Yes** · Source ▸ Used **Always, replacing any existing value in session state** · Required Off · Start New Row Yes · Span 3.
+4. **P911_FIRST_NAME** — Text Field · Label `First Name` · Value Required On · Start New Row No · Span 4 · Template Required - Floating.
+5. **P911_LAST_NAME** — Text Field · Label `Last Name` · Start New Row No · Span 5.
+6. **P911_GENDER** — **Radio Group** · Label `Gender` · LOV Type SQL Query `SELECT D, R FROM VW_LOV_LOOKUP WHERE LOOKUP_TYPE='GENDER' ORDER BY DISPLAY_ORDER` · Display Extra Values Off · Display Null Value Off · Settings ▸ Number of Columns 3 · Template Options ▸ Item Group Display **Display as Pill Button** · Start New Row Yes · Span 4.
+7. **P911_DATE_OF_BIRTH** — **Date Picker** · Label `Date of Birth` · **Format Mask `DD/MM/YYYY`** · Maximum Date `+0d` · Start New Row No · Span 4.
+8. **P911_BLOOD_GROUP** — **Select List** · Label `Blood Group` · LOV SQL Query `SELECT D, R FROM VW_LOV_LOOKUP WHERE LOOKUP_TYPE='BLOOD_GROUP' ORDER BY DISPLAY_ORDER` · Display Null Value Yes · Null Display Value `- Select -` · Start New Row No · Span 4.
+9. **P911_NID_NUMBER** — Text Field · Label `NID Number` · Start New Row Yes · Span 4.
+10. **P911_PHONE** — Text Field · Label `Phone` · Settings ▸ Subtype **Telephone** · Value Placeholder `01XXXXXXXXX` · Value Required On · Template Required - Floating · Start New Row No · Span 4.
+11. **P911_EMAIL** — Text Field · Label `Email` · Settings ▸ Subtype **Email** · Start New Row No · Span 4.
+12. **P911_PRESENT_ADDRESS** — **Textarea** · Label `Present Address` · Appearance ▸ Height 2 · Start New Row Yes · Span 12.
+13. **P911_PHOTO** — **Image Upload** · Label `Photo` · Settings ▸ Storage Type **BLOB column specified in Item Source** · MIME Type Column `PHOTO_MIME` · Filename Column `PHOTO_FILENAME` · Max File Size 2000 KB · Start New Row Yes · Span 6. (`06_photo_mime_cols.sql` run na hole item **Hidden** rakhun.)
 
-*Region 2: Job & Bank*
-| Item | Type | Label | Kora |
-|---|---|---|---|
-| P911_DEPT_ID | Select List | Department | LOV SQL `SELECT D,R FROM VW_LOV_DEPARTMENT WHERE BRANCH_ID=:G_BRANCH_ID ORDER BY D` · **Required** · Null `- Select -` · Span 4 |
-| P911_DESIGNATION_ID | Select List | Designation | LOV SQL `SELECT DESIGNATION_NAME d, DESIGNATION_ID r FROM HMS_DESIGNATION WHERE IS_ACTIVE='Y' ORDER BY DESIGNATION_LEVEL, 1` · **Required** · Span 4 |
-| P911_EMPLOYEE_TYPE | Select List | Employee Type | Static: `Permanent;PERMANENT,Contract;CONTRACT,Visiting;VISITING,Intern;INTERN,Trainee;TRAINEE` · Default `PERMANENT` · Span 4 |
-| P911_JOINING_DATE | Date Picker | Joining Date | **Required** · Format `DD/MM/YYYY` · Default ▸ PL/SQL Expression `TO_CHAR(SYSDATE,'DD/MM/YYYY')` · Span 4 · New Row Yes |
-| P911_REPORTING_TO | Popup LOV | Reports To | LOV SQL `SELECT TRIM(FIRST_NAME||' '||LAST_NAME)||' ('||EMPLOYEE_CODE||')' d, EMPLOYEE_ID r FROM HMS_EMPLOYEE WHERE IS_ACTIVE='Y' AND EMPLOYEE_ID <> NVL(:P911_EMPLOYEE_ID,-1) ORDER BY 1` · Display As **Modal Dialog** · Span 4 |
-| P911_BANK_NAME | Text Field | Bank | Span 4 · New Row Yes · **Authorization `AUTH_SUPER`** |
-| P911_BANK_ACCOUNT_NO | Text Field | Account No | Span 4 · **AUTH_SUPER** |
-| P911_TIN_NO | Text Field | TIN | Span 4 · **AUTH_SUPER** |
-| P911_IS_ACTIVE | **Switch** | Active | On `Y` / Off `N` · Default Static `Y` · New Row Yes |
-
-> Item **Authorization** = item ▸ Security ▸ Authorization Scheme.
-> Bank/TIN `AUTH_SUPER` — sudhu admin dekhbe.
+### Region 2 — Job & Bank (item gula drag kore ei region e niye jan)
+14. **P911_DEPT_ID** — **Select List** · Label `Department` · LOV SQL `SELECT D, R FROM VW_LOV_DEPARTMENT WHERE BRANCH_ID = :G_BRANCH_ID ORDER BY D` · Display Null Value Yes `- Select -` · Value Required On · Start New Row Yes · Span 4.
+15. **P911_DESIGNATION_ID** — Select List · Label `Designation` · LOV SQL `SELECT DESIGNATION_NAME d, DESIGNATION_ID r FROM HMS_DESIGNATION WHERE IS_ACTIVE='Y' ORDER BY DESIGNATION_LEVEL, 1` · Value Required On · Start New Row No · Span 4.
+16. **P911_EMPLOYEE_TYPE** — Select List · Label `Employee Type` · LOV Type **Static Values** (Display→Return): `Permanent→PERMANENT`, `Contract→CONTRACT`, `Visiting→VISITING`, `Intern→INTERN`, `Trainee→TRAINEE` · Default Static `PERMANENT` · Display Extra Values Off · Start New Row No · Span 4.
+17. **P911_JOINING_DATE** — Date Picker · Label `Joining Date` · Format Mask `DD/MM/YYYY` · Value Required On · Default ▸ Type **PL/SQL Expression** `TO_CHAR(SYSDATE,'DD/MM/YYYY')` · Start New Row Yes · Span 4.
+18. **P911_REPORTING_TO** — **Popup LOV** · Label `Reports To` · LOV SQL `SELECT TRIM(FIRST_NAME||' '||LAST_NAME)||' ('||EMPLOYEE_CODE||')' d, EMPLOYEE_ID r FROM HMS_EMPLOYEE WHERE IS_ACTIVE='Y' AND EMPLOYEE_ID <> NVL(:P911_EMPLOYEE_ID,-1) ORDER BY 1` · Settings ▸ Display As **Modal Dialog** · Start New Row No · Span 4.
+19. **P911_BANK_NAME** — Text Field · Label `Bank Name` · Security ▸ Authorization Scheme **AUTH_SUPER** · Start New Row Yes · Span 4.
+20. **P911_BANK_ACCOUNT_NO** — Text Field · Label `Account No` · Authorization **AUTH_SUPER** · Start New Row No · Span 4.
+21. **P911_TIN_NO** — Text Field · Label `TIN` · Authorization **AUTH_SUPER** · Start New Row No · Span 4.
+22. **P911_IS_ACTIVE** — **Switch** · Label `Active` · Settings ▸ On Value `Y` · Off Value `N` · Default Static `Y` · Start New Row Yes.
 
 **C4. Buttons:**
 | Button | Position | Kora |
