@@ -205,3 +205,11 @@ a { color: #0b6e99; }
 .a-GV-headerLabel { font-weight:600; color:#33505f; }
 .a-GV-header { background:#f1f6f9 !important; }
 .a-IG .a-GV-row.is-selected .a-GV-cell, .a-GV-row.is-selected .a-GV-cell { background:#e6f2f7 !important; }
+
+/* ---- v6: IR e chhoto column (code/date/phone/status) ek line e, wrap korbe na ---- */
+.a-IRR-table td[headers="EMPLOYEE_CODE"], .a-IRR-table td[headers="JOINING_DATE"],
+.a-IRR-table td[headers="EMPLOYEE_TYPE"], .a-IRR-table td[headers="PHONE"],
+.a-IRR-table td[headers="STATUS_TXT"],   .a-IRR-table td[headers="ROLE_TXT"],
+.a-IRR-table td[headers="DEPT_CODE"],    .a-IRR-table td[headers="DEPT_TYPE"],
+.a-IRR-table td[headers="MRN"] { white-space:nowrap; }
+.a-IRR-table th { white-space:nowrap; }
