@@ -4,10 +4,10 @@
 
 ## Specialization / Qualification (Step 3 er sathe ekta unnoti)
 - **P911_QUALIFICATION** — Text Field thik ache (MBBS, FCPS ...).
-- **P911_SPECIALIZATION** — **Combobox** (type korteo parben, list theke select o) — jate "Medicine" / "medicine" / "Medcine" alada na hoy:
-  Type **Combobox** · LOV Type **SQL Query**:
+- **P911_SPECIALIZATION** — **Text Field with Autocomplete** (type korle suggestion, list theke select o kora jay; "Medicine"/"medicine" alada hoy na):
+  Type **Text Field with Autocomplete** · LOV Type **SQL Query** (**ek column** — `d`/`r` na; Combobox dile *Manual Entries Item* error ashe) · Settings ▸ Search Type **Contains & Ignore Case**:
   ```sql
-  SELECT SPEC d, SPEC r FROM (
+  SELECT SPEC FROM (
     SELECT 'Medicine' SPEC FROM DUAL UNION SELECT 'Surgery' FROM DUAL UNION SELECT 'Gynecology & Obstetrics' FROM DUAL
     UNION SELECT 'Pediatrics' FROM DUAL UNION SELECT 'Orthopedics' FROM DUAL UNION SELECT 'Cardiology' FROM DUAL
     UNION SELECT 'Neurology' FROM DUAL UNION SELECT 'ENT' FROM DUAL UNION SELECT 'Eye (Ophthalmology)' FROM DUAL
@@ -16,7 +16,7 @@
     UNION SELECT SPECIALIZATION FROM HMS_DOCTOR WHERE SPECIALIZATION IS NOT NULL)
    ORDER BY 1
   ```
-  (Notun specialization type korle porer bar list e ashe.) Combobox na pele **Text Field with Autocomplete** ba Select List.
+  (Notun specialization type korle porer bar list e ashe. Item na pele sadharon Text Field rakhun.)
 
 ## STEP 1 — Schedule region (Region `Doctor Info` er bhitore)
 Create Region ▸ **Parent Region = Doctor Info** · Title `Weekly Schedule` · Type **Interactive Grid** · Source ▸ Type **SQL Query**:
