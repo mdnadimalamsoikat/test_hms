@@ -2,11 +2,18 @@
 
 > Page Group `Setup` toiri hoye geche ✅. Ekhon thik ei order e korun. Kono step e atke gele **screenshot** pathan.
 
-## PART 0 — ⚠️ Age ekbar DB fix (ORA-01400: cannot insert NULL into ...DEPT_ID)
-**Karon:** Table e `DEPT_ID DEFAULT SEQ_DEPARTMENT.NEXTVAL` ache, kintu APEX form insert e `DEPT_ID` e **NULL** pathay — tokhon DEFAULT kaj kore na → ORA-01400.
-**Fix:** SQL Developer (HMS_APP) e `database/11_apex_support/07_default_on_null_ids.sql` **Run Script (F5)**. Eta sob table er ID ke `DEFAULT ON NULL SEQ_x.NEXTVAL` banay (Employee, Doctor, Service... sob form e lagbe, tai ekbarei sob thik).
-Output e `Done. Columns changed: N` ar niche `DEFAULT_ON_NULL = YES` dekhben. Tarpor page e abar Save korun — NULL error jabe.
-> Page 901 e `P901_DEPT_ID` item **Source ▸ Type = Database Column** ▸ Column `DEPT_ID` ▸ **Primary Key** thakbe (wizard nijei dey) — eta thik ache.
+## PART 0 — ⚠️ Age ekbar DB fix (ORA-01400: cannot insert NULL into ...DEPT_ID / CREATED_DATE)
+**Karon:** Table e `DEPT_ID DEFAULT SEQ_DEPARTMENT.NEXTVAL`, `CREATED_DATE DEFAULT SYSTIMESTAMP` — kintu APEX form insert e jei column er item ache tar value **NULL** pathay. Explicit NULL dile Oracle **DEFAULT use kore na** → ORA-01400.
+(Trigger `TRG_AUDIT_COLUMNS` shudhu **UPDATE** e `UPDATED_BY/DATE` boshay. `CREATED_*` er jonno kono insert trigger nai — column DEFAULT i bharsha.)
+
+**Fix 1 (DB, ekbar):** SQL Developer (HMS_APP) e `database/11_apex_support/07_default_on_null_ids.sql` **Run Script (F5)** — sob table er ID, CREATED_DATE, CREATED_BY, IS_ACTIVE (default thaka NOT NULL column) ke `DEFAULT ON NULL` banay. Output: `Done. Columns changed: N`.
+Sudhu ei table e agey korte chaile: 
+```sql
+ALTER TABLE HMS_DEPARTMENT MODIFY (CREATED_DATE DEFAULT ON NULL SYSTIMESTAMP);
+ALTER TABLE HMS_DEPARTMENT MODIFY (CREATED_BY   DEFAULT ON NULL NVL(SYS_CONTEXT('APEX$SESSION','APP_USER'), USER));
+```
+**Fix 2 (APEX, protiti form e):** Page 901 theke ei item gula **delete** korun (form e dekhanor dorkar nai, DB nijei bosay): `P901_CREATED_BY, P901_CREATED_DATE, P901_UPDATED_BY, P901_UPDATED_DATE`.
+> Delete na korle **Edit/Save** e `ORA-01407 cannot update CREATED_DATE to NULL` ashbe.
 
 ## PART A — Page toiri (wizard)
 1. App Builder ▸ **Application 101** ▸ **Create Page** (sobuj button).

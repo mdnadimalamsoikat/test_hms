@@ -257,3 +257,5 @@ Tab 2 (optional): `HMS_LOGIN_HISTORY` report · Tab 3: `HMS_ERROR_LOG` (develope
 | Date ORA-01843 | Date Picker Format `DD/MM/YYYY` + TO_DATE mask ek |
 | Modal title/color purono | `hms.css` **ar** `hms.min.css` duita-i replace + Ctrl+F5 |
 | Save e `ORA-01400: cannot insert NULL into (...._ID)` | APEX ID e NULL pathay, DEFAULT SEQ.NEXTVAL kaj kore na → `07_default_on_null_ids.sql` run (DEFAULT ON NULL) |
+| Save e `ORA-01400: cannot insert NULL into (...CREATED_DATE)` | `07_default_on_null_ids.sql` abar run (notun version) + form theke CREATED_*/UPDATED_* item delete |
+| Edit Save e `ORA-01407 cannot update ... CREATED_DATE to NULL` | Form e P_CREATED_*/UPDATED_* item ache — delete korun |
