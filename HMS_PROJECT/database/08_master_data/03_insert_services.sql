@@ -38,7 +38,7 @@ SELECT c.CATEGORY_ID, v.V_CODE, v.V_NAME, v.V_RATE, v.V_SAMPLE_REQ, v.V_SAMPLE_T
         SELECT 'CONS', 'CONS-IPD',  'IPD Doctor Visit',            1000, 'N', NULL,    NULL,            NULL      FROM DUAL UNION ALL
         SELECT 'HEMA', 'CBC',       'Complete Blood Count (CBC)',   400, 'Y', 'Blood', 'Hematology',    '4 Hours' FROM DUAL UNION ALL
         SELECT 'HEMA', 'ESR',       'ESR',                          150, 'Y', 'Blood', 'Hematology',    '2 Hours' FROM DUAL UNION ALL
-        SELECT 'HEMA', 'BGRP',      'Blood Grouping & Rh',          200, 'Y', 'Blood', 'Hematology',    '1 Hour'  FROM DUAL UNION ALL
+        SELECT 'HEMA', 'BGRP',      'Blood Grouping and Rh',          200, 'Y', 'Blood', 'Hematology',    '1 Hour'  FROM DUAL UNION ALL
         SELECT 'BIOC', 'RBS',       'Random Blood Sugar',           150, 'Y', 'Blood', 'Biochemistry',  '1 Hour'  FROM DUAL UNION ALL
         SELECT 'BIOC', 'FBS',       'Fasting Blood Sugar',          150, 'Y', 'Blood', 'Biochemistry',  '1 Hour'  FROM DUAL UNION ALL
         SELECT 'BIOC', 'SCR',       'Serum Creatinine',             400, 'Y', 'Blood', 'Biochemistry',  '4 Hours' FROM DUAL UNION ALL
