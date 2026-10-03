@@ -49,7 +49,7 @@ SELECT e.EMPLOYEE_ID, e.EMPLOYEE_CODE,
 | STATUS_TXT | Heading `Status` ▸ HTML Expression `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>` |
 
 **B4. Button:** `Add Employee` · Hot · Icon `fa-user-plus` · Redirect Page **911** (Clear Cache 911) · Authorization `AUTH_SETUP_ADD`.
-**B5. No data message:** `Kono employee nai. "Add Employee" chepe notun toiri korun.`
+**B5. No data message:** `No employees found. Click "Add Employee" to create one.`
 **B6. Dialog Closed DA:** wizard dey — check: Event *Dialog Closed* ▸ Refresh region `Employees`.
 
 ## PART C — Page 911 (modal form)
@@ -111,7 +111,7 @@ Karon: APEX process er sequence/condition/session state e gorbor hole code `(Aut
 > Cancel korle number kharach hoy na, rollback hole number o rollback — gap hoy na.
 
 **C6. Validation — Phone** (Validating ▸ Create Validation):
-Type **Expression** (PL/SQL) · `REGEXP_LIKE(REPLACE(REPLACE(:P911_PHONE,' '),'-'),'^(\+?880)?01[3-9][0-9]{8}$')` · Error `Sothik mobile number din (01XXXXXXXXX)` · Associated Item `P911_PHONE` · When Button CREATE, SAVE.
+Type **Expression** (PL/SQL) · `REGEXP_LIKE(REPLACE(REPLACE(:P911_PHONE,' '),'-'),'^(\+?880)?01[3-9][0-9]{8}$')` · Error `Enter a valid mobile number (01XXXXXXXXX).` · Associated Item `P911_PHONE` · When Button CREATE, SAVE.
 
 ## PART D — ✅ Test
 1. Page 91 Run ▸ **Add Employee**.

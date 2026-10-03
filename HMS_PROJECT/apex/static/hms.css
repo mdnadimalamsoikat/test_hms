@@ -213,3 +213,16 @@ a { color: #0b6e99; }
 .a-IRR-table td[headers="DEPT_CODE"],    .a-IRR-table td[headers="DEPT_TYPE"],
 .a-IRR-table td[headers="MRN"] { white-space:nowrap; }
 .a-IRR-table th { white-space:nowrap; }
+
+/* ---- v7: Note / alert box  <div class="hms-note hms-note--info">...</div>  (info | warn | ok | danger) ---- */
+.hms-note { display:flex; gap:14px; align-items:flex-start; padding:14px 18px; border-radius:10px; margin:6px 0;
+            border:1px solid #bfe0ef; border-left:6px solid #0b6e99; background:#eaf6fb; color:#16394a; line-height:1.45; }
+.hms-note .fa { font-size:1.6rem; margin-top:2px; color:#0b6e99; }
+.hms-note b { font-weight:700; }
+.hms-note .hms-note-title { display:block; font-weight:700; font-size:1rem; margin-bottom:2px; }
+.hms-note--warn   { background:#fff6e5; border-color:#ffd9a0; border-left-color:#ef6c00; color:#5a3a00; }
+.hms-note--warn .fa   { color:#ef6c00; }
+.hms-note--ok     { background:#eaf7ec; border-color:#bfe3c4; border-left-color:#2e7d32; color:#1b4d20; }
+.hms-note--ok .fa     { color:#2e7d32; }
+.hms-note--danger { background:#fdecea; border-color:#f5c2be; border-left-color:#c62828; color:#6b1a16; }
+.hms-note--danger .fa { color:#c62828; }

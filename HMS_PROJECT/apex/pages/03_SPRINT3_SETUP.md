@@ -29,7 +29,7 @@ Page group banan: **Shared Components ▸ Page Groups ▸ Create** `Setup` — p
 | Form item | Sob item **Template Optional - Floating**, Y/N gulo **Switch**, choto option (Gender) **Radio Pill** | Modern look |
 | Grid row | IG te `Edit ▸ Enabled`, toolbar e *Save* **Hot**, Actions ▸ Report ▸ Save as Default | |
 | Date | Date Picker **Format `DD/MM/YYYY`** shob jaygay (Sprint 2 er ORA-01843 er shikkha) | |
-| Empty state | Report ▸ Messages ▸ *No data found*: `Kono data nai. "Add" chepe notun toiri korun.` | |
+| Empty state | Report ▸ Messages ▸ *No data found*: `No data found. Click "Add" to create one.` | |
 
 **Summary strip region** (Page 90 / 95 / 91 er upore) — Region ▸ Type **Dynamic Content** ▸ PL/SQL Function Body returning CLOB, Template **Blank with Attributes**, Static ID `summary`:
 ```plsql
@@ -87,7 +87,7 @@ SELECT d.DEPT_ID, d.DEPT_CODE, d.DEPT_NAME, d.DEPT_TYPE, p.DEPT_NAME PARENT_DEPT
 | P901_FLOOR_NO / ROOM_NO / EXTENSION_NO | Text | Span 4 each |
 | P901_IS_ACTIVE | **Switch** | On `Y` Off `N`, Default Y |
 - Buttons: CANCEL (Cancel Dialog) · DELETE (Danger, confirm, AUTH_SUPER) · SAVE / CREATE (Hot)
-- Validation: `Unique code` ▸ Type *No Rows returned* ▸ `SELECT 1 FROM HMS_DEPARTMENT WHERE DEPT_CODE=:P901_DEPT_CODE AND BRANCH_ID=:G_BRANCH_ID AND DEPT_ID<>NVL(:P901_DEPT_ID,-1)` ▸ `Ei code age theke ache`
+- Validation: `Unique code` ▸ Type *No Rows returned* ▸ `SELECT 1 FROM HMS_DEPARTMENT WHERE DEPT_CODE=:P901_DEPT_CODE AND BRANCH_ID=:G_BRANCH_ID AND DEPT_ID<>NVL(:P901_DEPT_ID,-1)` ▸ `This code already exists.`
 - Processes: ARP (wizard) → Close Dialog (wizard)
 - Page 90 e: **[DA] Dialog Closed** ▸ Selection Type Region (report) ▸ True: Refresh region (wizard 24.2 nijei dey, check korun)
 

@@ -86,7 +86,7 @@ END;
 
 ## STEP 7 — Validation
 Validating ▸ Create Validation:
-- Name `Doctor type required` · Type **Expression (PL/SQL)** · `:P911_IS_DOCTOR = 'N' OR :P911_DOCTOR_TYPE IS NOT NULL` · Error `Doctor Type select korun` · Associated Item `P911_DOCTOR_TYPE` · When Button CREATE, SAVE.
+- Name `Doctor type required` · Type **Expression (PL/SQL)** · `:P911_IS_DOCTOR = 'N' OR :P911_DOCTOR_TYPE IS NOT NULL` · Error `Please select a Doctor Type.` · Associated Item `P911_DOCTOR_TYPE` · When Button CREATE, SAVE.
 
 ## STEP 8 — ✅ Test
 1. Page 91 ▸ Pencil (EMP-00001) ▸ **Is Doctor?** ON ▸ **Doctor Info** section ashbe.

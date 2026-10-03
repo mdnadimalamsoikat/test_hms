@@ -32,8 +32,28 @@ SELECT SCHEDULE_ID, DOCTOR_ID, BRANCH_ID, DAY_OF_WEEK, START_TIME, END_TIME,
   `SELECT 1 FROM HMS_DOCTOR WHERE EMPLOYEE_ID = :P911_EMPLOYEE_ID AND IS_ACTIVE = 'Y'`
 - Attributes ▸ **Edit ▸ Enabled** ✅ · Allowed Operations: **Add Row** ✅ · **Update Row** ✅ · Delete Row ❌ (inactive switch use korun) · Toolbar e *Save* thakbe.
 
-## STEP 2 — Info message (doctor save er age)
-Create Region ▸ Title `Schedule` · Type **Static Content** · Parent `Doctor Info` · Text: `Schedule dite hole age doctor Save korun, tarpor abar Edit (pencil) khulun.` · **Server-side Condition ▸ Type = No rows returned**: `SELECT 1 FROM HMS_DOCTOR WHERE EMPLOYEE_ID = :P911_EMPLOYEE_ID AND IS_ACTIVE='Y'`.
+## STEP 2 — Note (doctor save er age) — designed message
+Rendering tree ▸ region **Doctor Info** ▸ right-click ▸ **Create Sub Region**:
+| Property | Value |
+|---|---|
+| Title | `Schedule Note` |
+| Type | **Static Content** |
+| Appearance ▸ Template | **Blank with Attributes** |
+| Server-side Condition ▸ Type | **No rows returned** |
+| SQL Query | `SELECT 1 FROM HMS_DOCTOR WHERE EMPLOYEE_ID = :P911_EMPLOYEE_ID AND IS_ACTIVE = 'Y'` |
+
+**Source ▸ Text** (HTML):
+```html
+<div class="hms-note hms-note--info">
+  <span class="fa fa-info-circle"></span>
+  <div>
+    <span class="hms-note-title">Save the doctor first</span>
+    To add a weekly schedule, click <b>Save</b>, then open this employee again
+    using the <span class="fa fa-edit"></span> <b>Edit</b> icon.
+  </div>
+</div>
+```
+(Needs `hms.css` + `hms.min.css` v7. Colors: `hms-note--info` blue · `--warn` orange · `--ok` green · `--danger` red.)
 
 ## STEP 3 — IG column (region `Weekly Schedule` ▸ Columns)
 | Column | Setting |
@@ -59,7 +79,7 @@ SELECT TO_CHAR(TRUNC(SYSDATE) + (LEVEL-1)/48, 'HH24:MI') d,
 
 ## STEP 4 — Validation (To > From)
 Processing ▸ Validating ▸ Create Validation:
-- Name `End after start` · **Editable Region = Weekly Schedule** · Type **Expression (PL/SQL)** · `:END_TIME > :START_TIME` · Error `"To" shomoy "From" er pore hote hobe`.
+- Name `End after start` · **Editable Region = Weekly Schedule** · Type **Expression (PL/SQL)** · `:END_TIME > :START_TIME` · Error `"To" time must be after "From" time.`.
 
 ## STEP 5 — Process sequence (khub important)
 Processing ▸ wizard er toiri **`Weekly Schedule - Save Interactive Grid Data`** process: **Sequence = Save Doctor er pore** (jemon 40). Sequence order:
@@ -72,7 +92,7 @@ Server-side Condition ▸ **Expression** `:REQUEST IN ('CREATE','SAVE')` (nijeri
 3. **Save** (form er Save button) ▸ Abar khulun ▸ 2 row thakbe.
 4. `SELECT DOCTOR_ID, DAY_OF_WEEK, START_TIME, END_TIME, SLOT_DURATION_MIN FROM HMS_DOCTOR_SCHEDULE;`
 5. To < From dile error.
-6. Notun employee e Is Doctor ON ▸ Save ▸ schedule-er jaygay message `Schedule dite hole age doctor Save korun...`
+6. Notun employee e Is Doctor ON ▸ Save ▸ schedule-er jaygay message `Please save the doctor first...`
 
 ## Problem hole
 | Problem | Fix |

@@ -66,7 +66,7 @@ Results region select ▸ Type **Cards** ▸ Attributes:
 | Badge | CURRENT_ADMISSION_NO (label "IPD") |
 | Action | Full Card ▸ Page **12** ▸ Set Items `P12_PATIENT_ID` = `&PATIENT_ID.` |
 | Pagination | Scroll, 24 cards |
-| No data | `Kono patient pawa jay nai. Notun registration korun.` |
+| No data | `No patients found. Please register a new patient.` |
 
 Sort: Region ▸ Order By ▸ `REGISTRATION_DATE DESC`.
 
@@ -177,8 +177,8 @@ SQL Commands: `SELECT LOOKUP_TYPE, COUNT(*) FROM HMS_LOOKUP_MASTER GROUP BY LOOK
 ### Validations
 | Name | Type | Code | When button |
 |---|---|---|---|
-| Phone format | Expression (PL/SQL) | `REGEXP_LIKE(REPLACE(REPLACE(:P10_PHONE_PRIMARY,' '),'-'),'^(\+?880)?01[3-9][0-9]{8}$')` · Error `Sothik mobile number din (01XXXXXXXXX)` · Associated item P10_PHONE_PRIMARY | CREATE, SAVE |
-| DOB or Age | Expression | `:P10_DATE_OF_BIRTH IS NOT NULL OR :P10_AGE_YEARS IS NOT NULL` · `Jonmo tarikh ba boyosh din` | CREATE, SAVE |
+| Phone format | Expression (PL/SQL) | `REGEXP_LIKE(REPLACE(REPLACE(:P10_PHONE_PRIMARY,' '),'-'),'^(\+?880)?01[3-9][0-9]{8}$')` · Error `Enter a valid mobile number (01XXXXXXXXX).` · Associated item P10_PHONE_PRIMARY | CREATE, SAVE |
+| DOB or Age | Expression | `:P10_DATE_OF_BIRTH IS NOT NULL OR :P10_AGE_YEARS IS NOT NULL` · `Enter date of birth or age.` | CREATE, SAVE |
 | Email | Expression | `:P10_EMAIL IS NULL OR REGEXP_LIKE(:P10_EMAIL,'^[^@ ]+@[^@ ]+\.[^@ ]+$')` | CREATE, SAVE |
 
 ### Processes (Processing tab — order important)

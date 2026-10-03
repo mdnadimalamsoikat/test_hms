@@ -79,7 +79,7 @@ Save (Ctrl+S). *Edit link ar column gula naam bodle jete pare — B3 e thik kora
 
 **B4. Button** — Region e wizard er *Create* button ▸ Label `Add Department` ▸ Hot ✅ ▸ Icon `fa-plus` ▸ Action Redirect to Page **901** (Clear Cache 901) ▸ Security ▸ Authorization `AUTH_SETUP_ADD`.
 
-**B5. Empty message** — region ▸ Attributes ▸ Messages ▸ When No Data Found: `Kono department nai. "Add Department" chepe notun toiri korun.`
+**B5. Empty message** — region ▸ Attributes ▸ Messages ▸ When No Data Found: `No departments found. Click "Add Department" to create one.`
 
 **B6. Run** (▶) — list khali, **Add Department** button dekha jabe ✅.
 
@@ -139,7 +139,7 @@ SELECT 1 FROM HMS_DEPARTMENT
  WHERE DEPT_CODE = :P901_DEPT_CODE AND BRANCH_ID = :G_BRANCH_ID
    AND DEPT_ID <> NVL(:P901_DEPT_ID,-1)
 ```
-- Error message `Ei code age theke ache` ▸ Associated Item **P901_DEPT_CODE**.
+- Error message `This code already exists.` ▸ Associated Item **P901_DEPT_CODE**.
 
 **C5. Processes** — wizard jeta banay ta thik (Process form Department + Close Dialog). Shudhu check: Process er Server-side Condition *Button Pressed* kono ulta na.
 
@@ -150,7 +150,7 @@ Page 90 ▸ Dynamic Actions tab (⚡) ▸ wizard age theke ekta **Dialog Closed*
 1. Page 90 Run ▸ **Add Department**.
 2. Code `OPD` · Name `Out Patient` · Type Clinical ▸ **Add Department** ▸ dialog bondho, list e dekha jabe (sobuj *Active* badge).
 3. Pencil click ▸ Floor `1` ▸ Save.
-4. Same code `OPD` abar ▸ error `Ei code age theke ache`.
+4. Same code `OPD` abar ▸ error `This code already exists.`.
 5. Active switch off ▸ Save ▸ badge dhusor *Inactive*.
 
 ✅ 5 ta pass hole bolun — porer step e KPI strip (design) + Employee/Doctor.
