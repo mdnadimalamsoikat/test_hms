@@ -116,7 +116,7 @@ SELECT PARAMETER_ID, SERVICE_ID, PARAMETER_CODE, PARAMETER_NAME, UNIT, RESULT_TY
        CAST(NULL AS VARCHAR2(1)) AS RANGE_LINK
   FROM HMS_LAB_PARAMETER WHERE SERVICE_ID = :P921_SERVICE_ID ORDER BY DISPLAY_ORDER, PARAMETER_ID
 ```
-Edit Enabled · Allowed Operations Add + Update (no Delete). Columns: PARAMETER_ID Hidden + Primary Key · SERVICE_ID Hidden, Default **Item** `P921_SERVICE_ID` (naam only, no `:`/`&`) · PARAMETER_CODE Text (Upper) · PARAMETER_NAME Text Required · UNIT Text · RESULT_TYPE Select (NUMERIC/TEXT/OPTION/MEMO, default NUMERIC, Required) · GROUP_NAME Text · DISPLAY_ORDER Number · IS_ACTIVE Switch (default Y) · **RANGE_LINK** Type **Link** (Page 922, Set Items `P922_PARAMETER_ID` = `#PARAMETER_ID#`, Link Text `<span class="fa fa-sliders"></span> Ranges`, Heading `Ranges`). Process `Lab Parameters - Save Interactive Grid Data` sequence after `Process form Service`.
+Edit Enabled · Allowed Operations Add + Update (no Delete). Columns: PARAMETER_ID Hidden + Primary Key · SERVICE_ID Hidden, Default **Item** `P921_SERVICE_ID` (naam only, no `:`/`&`) · PARAMETER_CODE Text (Upper) · PARAMETER_NAME Text Required · UNIT Text · RESULT_TYPE Select (NUMERIC/TEXT/OPTION/MEMO, default NUMERIC, Required) · GROUP_NAME Text · DISPLAY_ORDER Number · IS_ACTIVE Switch (default Y) · **RANGE_LINK** Type **Link** + **Source ▸ Query Only = On** (na dile Save e `ORA-01733: virtual column not allowed here`) (Page 922, Set Items `P922_PARAMETER_ID` = `#PARAMETER_ID#`, Link Text `<span class="fa fa-sliders"></span> Ranges`, Heading `Ranges`). Process `Lab Parameters - Save Interactive Grid Data` sequence after `Process form Service`.
 
 ## STEP 9 — Page 922 Reference Range (modal)
 Create Page ▸ Report ▸ Interactive Grid ▸ Page 922 `Reference Ranges` · Page Mode **Modal Dialog** · no navigation menu · Table `HMS_LAB_REFERENCE_RANGE` · Edit enabled. Page: Dialog Width `1100` · Authorization `AUTH_SETUP`.
@@ -129,3 +129,9 @@ SELECT p.PARAMETER_NAME || ' — ' || s.SERVICE_NAME || ' (' || NVL(p.UNIT,'-') 
 IG Source: `... FROM HMS_LAB_REFERENCE_RANGE WHERE PARAMETER_ID = :P922_PARAMETER_ID ORDER BY GENDER, AGE_FROM_DAYS` · Page Items to Submit `P922_PARAMETER_ID`.
 Columns: RANGE_ID Hidden PK · PARAMETER_ID Hidden Default Item `P922_PARAMETER_ID` · GENDER Select (Male/Female/All → MALE/FEMALE/ALL, default ALL, Required) · AGE_FROM_DAYS Number default 0 · AGE_TO_DAYS Number default 54750 (= 150 years) · MIN_VALUE `Min` · MAX_VALUE `Max` · CRITICAL_LOW · CRITICAL_HIGH · NORMAL_TEXT · IS_ACTIVE Switch default Y.
 Validations (Editable Region = IG): `Max >= Min`: `:MAX_VALUE IS NULL OR :MIN_VALUE IS NULL OR TO_NUMBER(:MAX_VALUE) >= TO_NUMBER(:MIN_VALUE)` — error `Max must be greater than or equal to Min.` · `Age range`: `TO_NUMBER(:AGE_TO_DAYS) >= TO_NUMBER(:AGE_FROM_DAYS)` — error `Age To must be greater than or equal to Age From.`
+
+
+## Problems
+- `ORA-01733: virtual column not allowed here` (IG Save): SQL e banano extra column (RANGE_LINK) → column ▸ Source ▸ **Query Only = On**.
+- Lab Parameters grid e shudhu nijer add kora row: seed statement 3/4 (parameter + reference range) chalan hoy ni — `03_insert_services.sql` er 3, 4 number statement SQL Commands e alada chalan.
+- Active switch e `Required` lekha: item ▸ Validation ▸ Value Required **Off**.
