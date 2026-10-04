@@ -78,3 +78,14 @@ Validation `Sample type required` (Expression PL/SQL): `:P921_SAMPLE_REQUIRED = 
 
 DA `Outsource toggle` (Change on IS_OUTSOURCED, condition = `Y`): True ▸ Show OUTSOURCE_LAB + OUTSOURCE_COST (init On) · False ▸ Hide (init On) + Clear (init Off).
 Validation `Outsource lab required` (Expression PL/SQL): `:P921_IS_OUTSOURCED = 'N' OR :P921_OUTSOURCE_LAB IS NOT NULL` · Error `Please enter the outsource lab name.` · Item P921_OUTSOURCE_LAB.
+
+## STEP 6 — Page 921 buttons, validation, test
+- Buttons: CANCEL (Position Close, Action Defined by Dynamic Action) · **DELETE button muche din** (service bill/lab e use hoy — Active switch diye bondho korun) · SAVE (Label `Save`, Hot, Condition `P921_SERVICE_ID` Item is NOT NULL) · CREATE (Label `Add Service`, Hot, Condition `P921_SERVICE_ID` Item is NULL).
+- Validation `Unique code` (Type **No Rows returned**, SQL Query, Item `P921_SERVICE_CODE`, condition lagbe na):
+```sql
+SELECT 1 FROM HMS_SERVICE_MASTER
+ WHERE SERVICE_CODE = :P921_SERVICE_CODE AND SERVICE_ID <> NVL(:P921_SERVICE_ID,-1)
+```
+  Error `This code already exists.`
+- Test: Run 921 ▸ Code `TEST-01`, Name `Test Service`, Category Consultation, Base Charge 100 ▸ Add Service. Check `SELECT * FROM HMS_SERVICE_MASTER WHERE SERVICE_CODE='TEST-01'`. Same code again ▸ error. Cleanup: `DELETE FROM HMS_SERVICE_MASTER WHERE SERVICE_CODE='TEST-01'; COMMIT;`
+- ORA-01400 (NULL into SERVICE_ID / CREATED_DATE): run `database/11_apex_support/07_default_on_null_ids.sql` v3 again.
