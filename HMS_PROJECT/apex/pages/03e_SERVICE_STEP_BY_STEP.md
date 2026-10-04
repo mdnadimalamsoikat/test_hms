@@ -103,3 +103,29 @@ SELECT s.SERVICE_ID, s.SERVICE_CODE, s.SERVICE_NAME, c.CATEGORY_NAME, c.CATEGORY
 ```
 Columns: SERVICE_ID = Link (Page 921, Set Items `P921_SERVICE_ID`=`#SERVICE_ID#`, Clear Cache 921, Link Text `<span class="fa fa-edit" aria-label="Edit"></span>`, Heading blank) · SERVICE_CODE HTML Expression `<span class="hms-code">#SERVICE_CODE#</span>` · CATEGORY_NAME HTML Expression `<span class="hms-cat hms-cat-#CATEGORY_TYPE#">#CATEGORY_NAME#</span>` · CATEGORY_TYPE, IS_ACTIVE = Hidden Column · BASE_CHARGE/EMERGENCY_CHARGE right aligned + Format Mask `999G999G990D00` · STATUS_TXT HTML Expression `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>`.
 Button `Add Service` (Region Buttons slot, Hot, `fa-plus`, Redirect Page 921, Clear Cache 921, `AUTH_SETUP_ADD`) · Empty message `No services found. Click "Add Service" to create one.` · DA `Dialog Closed` (Event Dialog Closed, Region `Services`, Refresh Region `Services`).
+
+## STEP 8 — Lab Parameters grid on Page 921 (only LAB services)
+IG region `Lab Parameters` (Static ID `service_params`, seq 50, Page Items to Submit `P921_SERVICE_ID`), Server-side Condition **Rows returned**:
+```sql
+SELECT 1 FROM HMS_SERVICE_MASTER s JOIN HMS_SERVICE_CATEGORY c ON c.CATEGORY_ID = s.CATEGORY_ID
+ WHERE s.SERVICE_ID = :P921_SERVICE_ID AND c.CATEGORY_TYPE = 'LAB'
+```
+Source:
+```sql
+SELECT PARAMETER_ID, SERVICE_ID, PARAMETER_CODE, PARAMETER_NAME, UNIT, RESULT_TYPE, GROUP_NAME, DISPLAY_ORDER, IS_ACTIVE,
+       CAST(NULL AS VARCHAR2(1)) AS RANGE_LINK
+  FROM HMS_LAB_PARAMETER WHERE SERVICE_ID = :P921_SERVICE_ID ORDER BY DISPLAY_ORDER, PARAMETER_ID
+```
+Edit Enabled · Allowed Operations Add + Update (no Delete). Columns: PARAMETER_ID Hidden + Primary Key · SERVICE_ID Hidden, Default **Item** `P921_SERVICE_ID` (naam only, no `:`/`&`) · PARAMETER_CODE Text (Upper) · PARAMETER_NAME Text Required · UNIT Text · RESULT_TYPE Select (NUMERIC/TEXT/OPTION/MEMO, default NUMERIC, Required) · GROUP_NAME Text · DISPLAY_ORDER Number · IS_ACTIVE Switch (default Y) · **RANGE_LINK** Type **Link** (Page 922, Set Items `P922_PARAMETER_ID` = `#PARAMETER_ID#`, Link Text `<span class="fa fa-sliders"></span> Ranges`, Heading `Ranges`). Process `Lab Parameters - Save Interactive Grid Data` sequence after `Process form Service`.
+
+## STEP 9 — Page 922 Reference Range (modal)
+Create Page ▸ Report ▸ Interactive Grid ▸ Page 922 `Reference Ranges` · Page Mode **Modal Dialog** · no navigation menu · Table `HMS_LAB_REFERENCE_RANGE` · Edit enabled. Page: Dialog Width `1100` · Authorization `AUTH_SETUP`.
+Items: `P922_PARAMETER_ID` Hidden (Value Protected) · `P922_PARAM_TITLE` Display Only, Label `Parameter`, Source SQL Query (return single value), Used Always:
+```sql
+SELECT p.PARAMETER_NAME || ' — ' || s.SERVICE_NAME || ' (' || NVL(p.UNIT,'-') || ')'
+  FROM HMS_LAB_PARAMETER p JOIN HMS_SERVICE_MASTER s ON s.SERVICE_ID = p.SERVICE_ID
+ WHERE p.PARAMETER_ID = :P922_PARAMETER_ID
+```
+IG Source: `... FROM HMS_LAB_REFERENCE_RANGE WHERE PARAMETER_ID = :P922_PARAMETER_ID ORDER BY GENDER, AGE_FROM_DAYS` · Page Items to Submit `P922_PARAMETER_ID`.
+Columns: RANGE_ID Hidden PK · PARAMETER_ID Hidden Default Item `P922_PARAMETER_ID` · GENDER Select (Male/Female/All → MALE/FEMALE/ALL, default ALL, Required) · AGE_FROM_DAYS Number default 0 · AGE_TO_DAYS Number default 54750 (= 150 years) · MIN_VALUE `Min` · MAX_VALUE `Max` · CRITICAL_LOW · CRITICAL_HIGH · NORMAL_TEXT · IS_ACTIVE Switch default Y.
+Validations (Editable Region = IG): `Max >= Min`: `:MAX_VALUE IS NULL OR :MIN_VALUE IS NULL OR TO_NUMBER(:MAX_VALUE) >= TO_NUMBER(:MIN_VALUE)` — error `Max must be greater than or equal to Min.` · `Age range`: `TO_NUMBER(:AGE_TO_DAYS) >= TO_NUMBER(:AGE_FROM_DAYS)` — error `Age To must be greater than or equal to Age From.`
