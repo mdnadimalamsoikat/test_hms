@@ -89,3 +89,17 @@ SELECT 1 FROM HMS_SERVICE_MASTER
   Error `This code already exists.`
 - Test: Run 921 ▸ Code `TEST-01`, Name `Test Service`, Category Consultation, Base Charge 100 ▸ Add Service. Check `SELECT * FROM HMS_SERVICE_MASTER WHERE SERVICE_CODE='TEST-01'`. Same code again ▸ error. Cleanup: `DELETE FROM HMS_SERVICE_MASTER WHERE SERVICE_CODE='TEST-01'; COMMIT;`
 - ORA-01400 (NULL into SERVICE_ID / CREATED_DATE): run `database/11_apex_support/07_default_on_null_ids.sql` v3 again.
+
+## STEP 7 — Page 92 design (CSS v8 + columns)
+CSS: `hms.css` + `hms.min.css` v8 (`.hms-code`, `.hms-cat`, price right-align) → replace in APEX Shared Components ▸ Static Application Files, Ctrl+F5.
+SQL (add `c.CATEGORY_TYPE`):
+```sql
+SELECT s.SERVICE_ID, s.SERVICE_CODE, s.SERVICE_NAME, c.CATEGORY_NAME, c.CATEGORY_TYPE, d.DEPT_NAME,
+       s.BASE_CHARGE, s.EMERGENCY_CHARGE, s.REPORTING_SECTION,
+       CASE s.IS_ACTIVE WHEN 'Y' THEN 'Active' ELSE 'Inactive' END AS STATUS_TXT, s.IS_ACTIVE
+  FROM HMS_SERVICE_MASTER s
+  JOIN HMS_SERVICE_CATEGORY c ON c.CATEGORY_ID = s.CATEGORY_ID
+  LEFT JOIN HMS_DEPARTMENT d ON d.DEPT_ID = s.DEPT_ID
+```
+Columns: SERVICE_ID = Link (Page 921, Set Items `P921_SERVICE_ID`=`#SERVICE_ID#`, Clear Cache 921, Link Text `<span class="fa fa-edit" aria-label="Edit"></span>`, Heading blank) · SERVICE_CODE HTML Expression `<span class="hms-code">#SERVICE_CODE#</span>` · CATEGORY_NAME HTML Expression `<span class="hms-cat hms-cat-#CATEGORY_TYPE#">#CATEGORY_NAME#</span>` · CATEGORY_TYPE, IS_ACTIVE = Hidden Column · BASE_CHARGE/EMERGENCY_CHARGE right aligned + Format Mask `999G999G990D00` · STATUS_TXT HTML Expression `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>`.
+Button `Add Service` (Region Buttons slot, Hot, `fa-plus`, Redirect Page 921, Clear Cache 921, `AUTH_SETUP_ADD`) · Empty message `No services found. Click "Add Service" to create one.` · DA `Dialog Closed` (Event Dialog Closed, Region `Services`, Refresh Region `Services`).

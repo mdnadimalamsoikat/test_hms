@@ -226,3 +226,17 @@ a { color: #0b6e99; }
 .hms-note--ok .fa     { color:#2e7d32; }
 .hms-note--danger { background:#fdecea; border-color:#f5c2be; border-left-color:#c62828; color:#6b1a16; }
 .hms-note--danger .fa { color:#c62828; }
+
+/* ---- v8: Service list polish (Page 92) ---- */
+.hms-code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.8rem; font-weight:600;
+            background:#eef3f7; color:#1f3a4d; padding:2px 8px; border-radius:6px; white-space:nowrap; }
+.hms-cat  { display:inline-block; padding:2px 10px; border-radius:12px; font-size:.75rem; font-weight:600; white-space:nowrap;
+            background:#e3f2fd; color:#0b5394; }
+.hms-cat.hms-cat-LAB        { background:#f3e5f5; color:#6a1b9a; }
+.hms-cat.hms-cat-RADIOLOGY  { background:#e0f2f1; color:#00695c; }
+.hms-cat.hms-cat-CONSULTATION { background:#e8f5e9; color:#2e7d32; }
+.hms-cat.hms-cat-BED, .hms-cat.hms-cat-NURSING { background:#fff3e0; color:#e65100; }
+.hms-cat.hms-cat-PROCEDURE, .hms-cat.hms-cat-OT { background:#fce4ec; color:#ad1457; }
+.a-IRR-table td[headers="BASE_CHARGE"], .a-IRR-table td[headers="EMERGENCY_CHARGE"],
+.a-IRR-table td[headers="SERVICE_CODE"], .a-IRR-table td[headers="CATEGORY_NAME"] { white-space:nowrap; }
+.a-IRR-table td[headers="BASE_CHARGE"] { font-weight:600; font-variant-numeric:tabular-nums; }
