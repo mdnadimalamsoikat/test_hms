@@ -19,3 +19,7 @@ SELECT i.ITEM_ID, i.ITEM_CODE, i.ITEM_NAME, g.GENERIC_NAME, i.STRENGTH, i.DOSAGE
 
 ## Problem
 - Items 0 row (error chara): `HMS_PHARMA_CATEGORY` khali thakle JOIN mile na. Seed script ekhon category-o dhokay; check: `SELECT COUNT(*) FROM HMS_PHARMA_CATEGORY` = 8.
+
+## STEP 2 — Page 94 design (CSS v11)
+Columns: ITEM_CODE Heading `Code` + HTML Expression `<span class="hms-code">#ITEM_CODE#</span>` · ITEM_NAME `Medicine` · GENERIC_NAME `Generic` + HTML Expression `<span class="hms-cat">#GENERIC_NAME#</span>` (CSS `.hms-cat:empty` NULL e chip lukay) · STRENGTH `Strength` · DOSAGE_FORM `Form` · MANUFACTURER_NAME `Manufacturer` · PURCHASE_PRICE `Buy (Tk)` / MRP `MRP (Tk)` right align + Format Mask `999G999G990D00` · STATUS_TXT badge `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>` · ITEM_ID (Link to 941) + IS_ACTIVE Hidden. Empty message `No medicines found. Click "Add Medicine" to create one.`
+Edit link, `Add Medicine` button, Dialog Closed DA — Page 941 toiri hobar por (STEP 3).

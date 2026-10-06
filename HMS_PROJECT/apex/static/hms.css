@@ -250,3 +250,9 @@ a { color: #0b6e99; }
 
 /* ---- v10: Link-type IG column used only to show an HTML badge (not clickable) ---- */
 .hms-nolink a, a.hms-nolink { pointer-events:none; text-decoration:none !important; color:inherit; cursor:default; }
+
+/* ---- v11: Medicine list (Page 94) ---- */
+.hms-cat:empty { display:none; }
+.a-IRR-table td[headers="ITEM_CODE"], .a-IRR-table td[headers="MRP"], .a-IRR-table td[headers="PURCHASE_PRICE"],
+.a-IRR-table td[headers="STRENGTH"], .a-IRR-table td[headers="DOSAGE_FORM"] { white-space:nowrap; }
+.a-IRR-table td[headers="MRP"] { font-weight:600; font-variant-numeric:tabular-nums; }
