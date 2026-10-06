@@ -247,3 +247,6 @@ a { color: #0b6e99; }
 .hms-badge.RESERVED    { background:#ef6c00; }
 .hms-badge.MAINTENANCE { background:#78909c; }
 .hms-badge.CLEANING    { background:#0b6e99; }
+
+/* ---- v10: Link-type IG column used only to show an HTML badge (not clickable) ---- */
+.hms-nolink a, a.hms-nolink { pointer-events:none; text-decoration:none !important; color:inherit; cursor:default; }

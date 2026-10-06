@@ -18,3 +18,7 @@ Columns: WARD_ID Hidden+PK · BRANCH_ID Hidden, Default Item `G_BRANCH_ID` · DE
 ## STEP 3 — Bed grid (CSS v9: bed status badge)
 Region Title `Beds` · Order By Clause `BED_NO` · Edit Add + Update.
 Columns: BED_ID Hidden+PK · WARD_ID Hidden (wizard master link) · BED_NO Text Upper Required · BED_TYPE Select (GENERAL, CABIN_AC, CABIN_NON_AC, SUITE, ICU, CCU, NICU, CRADLE) Required · SERVICE_ID Select `SELECT s.SERVICE_NAME d, s.SERVICE_ID r FROM HMS_SERVICE_MASTER s JOIN HMS_SERVICE_CATEGORY c ON c.CATEGORY_ID = s.CATEGORY_ID WHERE c.CATEGORY_TYPE = 'BED' AND s.IS_ACTIVE = 'Y' ORDER BY 1` · DAILY_CHARGE Number, Format `999G999G990D00`, right · **BED_STATUS** Type **Plain Text** + HTML Expression `<span class="hms-badge #BED_STATUS#">#BED_STATUS#</span>` + **Source ▸ Query Only = On** (status admission trigger/ward board theke change hoy; insert e DB default `AVAILABLE`) · IS_ACTIVE Switch default Y.
+
+## Problem — IG column e HTML badge `<span ...>` text hoye dekhay (escape)
+IG te **Display Only/Plain Text** column e `HTML Expression` / `Escape special characters` nai (24.2). Solution: column Type **Link** (Link Text HTML render hoy — Edit pencil er moto) + CSS v10:
+BED_STATUS_BADGE (SQL column) → Type **Link** · Heading `Status` · Link Target Type **URL** `javascript:void(0);` · Link Text `<span class="hms-badge #BED_STATUS#">#BED_STATUS#</span>` · Appearance ▸ CSS Classes `hms-nolink` · Source ▸ Query Only On. BED_STATUS = Hidden, Query Only On.
