@@ -21,4 +21,4 @@ Columns: BED_ID Hidden+PK · WARD_ID Hidden (wizard master link) · BED_NO Text 
 
 ## Problem — IG column e HTML badge `<span ...>` text hoye dekhay (escape)
 IG te **Display Only/Plain Text** column e `HTML Expression` / `Escape special characters` nai (24.2). Solution: column Type **Link** (Link Text HTML render hoy — Edit pencil er moto) + CSS v10:
-BED_STATUS_BADGE (SQL column) → Type **Link** · Heading `Status` · Link Target Type **URL** `javascript:void(0);` · Link Text `<span class="hms-badge #BED_STATUS#">#BED_STATUS#</span>` · Appearance ▸ CSS Classes `hms-nolink` · Source ▸ Query Only On. BED_STATUS = Hidden, Query Only On.
+BED_STATUS_BADGE (SQL column) → Type **Link** · Heading `Status` · Link Target Type **URL** `javascript:void(0);` · Link Text `<span class="hms-badge &BED_STATUS.">&BED_STATUS.</span>` (IG Link Text e `#COL#` boshe na — `&COL.` likhun) · Appearance ▸ CSS Classes `hms-nolink` · Source ▸ Query Only On. BED_STATUS = Hidden, Query Only On.
