@@ -240,3 +240,10 @@ a { color: #0b6e99; }
 .a-IRR-table td[headers="BASE_CHARGE"], .a-IRR-table td[headers="EMERGENCY_CHARGE"],
 .a-IRR-table td[headers="SERVICE_CODE"], .a-IRR-table td[headers="CATEGORY_NAME"] { white-space:nowrap; }
 .a-IRR-table td[headers="BASE_CHARGE"] { font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* ---- v9: Bed status badge  <span class="hms-badge AVAILABLE">AVAILABLE</span> ---- */
+.hms-badge.AVAILABLE   { background:#2e7d32; }
+.hms-badge.OCCUPIED    { background:#c62828; }
+.hms-badge.RESERVED    { background:#ef6c00; }
+.hms-badge.MAINTENANCE { background:#78909c; }
+.hms-badge.CLEANING    { background:#0b6e99; }
