@@ -3,10 +3,19 @@
  File    : database/08_master_data/05_insert_pharmacy_demo.sql
  Run As  : HMS_APP     (SQL Workshop > SQL Scripts)   — re-runnable (NOT EXISTS)
  Purpose : Demo generics, manufacturers, 20 medicines (ITEM_CODE trigger theke MED-0000x)
- Pre-req : TRG_AUTO_CODES.sql (TRG_PHARMA_ITEM_CODE_BI) + category seed (02_insert_lookup_data.sql)
+ Pre-req : TRG_AUTO_CODES.sql (TRG_PHARMA_ITEM_CODE_BI)
 ================================================================================
 */
 SET DEFINE OFF
+
+-- Category (Tablet, Syrup ...) — na thakle item JOIN e mile na, 0 row dhoke (error chara).
+INSERT INTO HMS_PHARMA_CATEGORY (CATEGORY_NAME)
+SELECT v.V_NAME FROM (
+  SELECT 'Tablet' V_NAME FROM DUAL UNION ALL SELECT 'Capsule' FROM DUAL UNION ALL
+  SELECT 'Syrup' FROM DUAL UNION ALL SELECT 'Injection' FROM DUAL UNION ALL
+  SELECT 'IV Fluid' FROM DUAL UNION ALL SELECT 'Ointment / Cream' FROM DUAL UNION ALL
+  SELECT 'Drops' FROM DUAL UNION ALL SELECT 'Surgical Item' FROM DUAL) v
+ WHERE NOT EXISTS (SELECT 1 FROM HMS_PHARMA_CATEGORY t WHERE t.CATEGORY_NAME = v.V_NAME);
 
 INSERT INTO HMS_PHARMA_GENERIC (GENERIC_NAME)
 SELECT v.V_NAME FROM (
