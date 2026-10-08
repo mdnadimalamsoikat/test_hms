@@ -44,3 +44,28 @@ Test: Add `Test Med`, Generic Paracetamol, Category Tablet, Form Tablet, MRP 5 �
 - Items 0 row (error chara): category khali → seed e category ache; check `SELECT COUNT(*) FROM HMS_PHARMA_CATEGORY` = 8.
 - Item missing in Rendering tree (GENERIC_ID etc.): wizard column shuttle e select hoy ni → region ▸ Create Page Item, Source ▸ Type **Database Column** ▸ Column Name.
 - Category column name `PH_CATEGORY_ID` (`CATEGORY_ID` noy).
+
+## PART D — Success message (Add / Update) + newest-first list
+**D1. Success message** — wizard er `Process form Medicine` e `Success Message` ache kintu dialog close hole dekhay na / Add-Update alada hoy na. Solution: duplicate message bad, dui ta chhoto PL/SQL process.
+1. Page 941 ▸ Processing ▸ `Process form Medicine` ▸ **Success Message** = (faka kore din).
+2. Right-click Processing ▸ Create Process:
+   - Name `Msg added` · Type **Execute Code** (PL/SQL) · Sequence **ARP er pore, `Close Dialog` er age** · Server-side Condition **When Button Pressed = CREATE**:
+```sql
+DECLARE
+    l_code HMS_PHARMA_ITEM.ITEM_CODE%TYPE;
+BEGIN
+    SELECT ITEM_CODE INTO l_code FROM HMS_PHARMA_ITEM WHERE ITEM_ID = :P941_ITEM_ID;
+    apex_application.g_print_success_message :=
+        apex_escape.html(l_code || ' - ' || :P941_ITEM_NAME) || ' added successfully.';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+    apex_application.g_print_success_message := 'Medicine added successfully.';
+END;
+```
+   - Name `Msg updated` · same Type/Sequence · Condition **When Button Pressed = SAVE**:
+```sql
+BEGIN
+    apex_application.g_print_success_message :=
+        apex_escape.html(:P941_ITEM_NAME) || ' updated successfully.';
+END;
+```
+**D2. Newest first** — IR e SQL `ORDER BY` kaj kore na (user sort/default report override kore; ward IG te ORDER BY remove kora hoyechhe). Solution: Page 94 ke Developer hishebe run ▸ Actions ▸ Data ▸ Sort ▸ Column `Code` ▸ Direction **Descending** ▸ Apply ▸ Actions ▸ Report ▸ **Save Report ▸ As Default Report Settings** (Primary). (Code `MED-00021` > `MED-00020`, zero-padded tai desc = newest first.)
