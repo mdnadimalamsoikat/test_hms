@@ -94,4 +94,4 @@ END;
    - APEX er bilt-in variable; ja boshabe parent page e shobuj bar e dekhabe. `SELECT ITEM_CODE ...` keno: code ta **trigger banay insert er por**, tai save er por table theke poro. `apex_escape.html` = naam e `<script>` thakle-o safe (**XSS** theke bachay).
 8. **Trigger `TRG_PHARMA_ITEM_CODE_BI`** (DB e)
    - Insert er thik age ITEM_CODE faka/`(Auto)` hole `MED-` + sequence (5 digit) boshay. Page/Import/API jei insert korbe, **rule ek**. Page process e likhle onno path e bhul hoto.
-9. **Dialog Closed DA → Refresh**: form dialog bondho hole browser list region tazа kore, tai notun row dekha jay.
+9. **Dialog Closed DA → Refresh**: form dialog bondho hole browser list region taja kore, tai notun row dekha jay.
