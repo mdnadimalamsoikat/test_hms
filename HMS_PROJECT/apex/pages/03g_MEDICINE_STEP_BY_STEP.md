@@ -69,3 +69,29 @@ BEGIN
 END;
 ```
 **D2. Newest first** — IR e SQL `ORDER BY` kaj kore na (user sort/default report override kore; ward IG te ORDER BY remove kora hoyechhe). Solution: Page 94 ke Developer hishebe run ▸ Actions ▸ Data ▸ Sort ▸ Column `Code` ▸ Direction **Descending** ▸ Apply ▸ Actions ▸ Report ▸ **Save Report ▸ As Default Report Settings** (Primary). (Code `MED-00021` > `MED-00020`, zero-padded tai desc = newest first.)
+
+## PART E — Code gulo ki kaj kore (bujhe nin, porer bar nijei likhte parben)
+
+1. **Page 94 SQL** (`FROM HMS_PHARMA_ITEM i LEFT JOIN ...generic g ... manufacturer m`)
+   - *Keno:* item table e sudhu ID thake (`GENERIC_ID = 3`). Manush ke naam dekhate hole onno table theke naam ante hoy = **JOIN**.
+   - *LEFT JOIN keno:* manufacturer faka thakle-o oshudh ta list e thakbe. Normal JOIN e oi row **hariye jay**.
+   - `CASE i.IS_ACTIVE WHEN 'Y' THEN 'Active' ELSE 'Inactive' END` → DB te `Y/N`, user ke dekhay `Active/Inactive`.
+   - *Fol:* prottek oshudh = 1 row, ID er jaygay naam.
+2. **HTML Expression** `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>`
+   - `#COLUMN#` = prottek row er nijer value boshe. Class `hms-st-Y` ke CSS (`hms.css`) shobuj rong dey, `hms-st-N` lal. Fol: rongin Active/Inactive tag.
+3. **Edit link** (Set Items `P941_ITEM_ID = #ITEM_ID#`, Clear Cache `941`)
+   - Click kora row er ID form e pathay; form oi ID diye table theke row anay (**Fetch Row**). Clear Cache purono value muche dey, tai "Add" e faka form ashe.
+4. **LOV** `SELECT GENERIC_NAME d, GENERIC_ID r ...`
+   - `d` = display (user dekhe naam), `r` = return (DB te ID jay → Foreign Key). `WHERE IS_ACTIVE='Y'` = inactive ta dropdown e ashe na. `ORDER BY 1` = naam A–Z.
+5. **Validation MRP >= Buy**: `:P941_MRP IS NULL OR ... OR TO_NUMBER(:P941_MRP) >= TO_NUMBER(:P941_PURCHASE_PRICE)`
+   - Expression **TRUE hole pass**. Page item sob text, tai `TO_NUMBER` na dile "9" > "10" hoye jay (text compare). NULL guard: faka thakle error dey na (Required alada check kore).
+   - *Keno:* kom daame bikri = hospital er loss.
+6. **Validation Duplicate** (type *No Rows returned*)
+   - Query jodi **kono row dey = error**. Same naam+strength+form (UPPER = boro/choto hater farak ignore).
+   - `NVL(STRENGTH,'-')`: SQL e `NULL = NULL` **false**; NVL na dile strength faka oshudh er duplicate dhora porto na.
+   - `ITEM_ID <> NVL(:P941_ITEM_ID,-1)`: **Edit** e nijeke nijer duplicate bole na ... **Add** e ID faka, tai `-1` (kono real ID na).
+7. **Success message process**: `apex_application.g_print_success_message := ...`
+   - APEX er bilt-in variable; ja boshabe parent page e shobuj bar e dekhabe. `SELECT ITEM_CODE ...` keno: code ta **trigger banay insert er por**, tai save er por table theke poro. `apex_escape.html` = naam e `<script>` thakle-o safe (**XSS** theke bachay).
+8. **Trigger `TRG_PHARMA_ITEM_CODE_BI`** (DB e)
+   - Insert er thik age ITEM_CODE faka/`(Auto)` hole `MED-` + sequence (5 digit) boshay. Page/Import/API jei insert korbe, **rule ek**. Page process e likhle onno path e bhul hoto.
+9. **Dialog Closed DA → Refresh**: form dialog bondho hole browser list region tazа kore, tai notun row dekha jay.
