@@ -3,9 +3,12 @@ REM ======== Kaj SHURU te double-click (je PC te bosben) ========
 cd /d C:\HMS_PROJECT
 call sync\config.bat
 
-echo [1/4] Git pull (latest script + dump + APEX) ...
-git pull
-if errorlevel 1 ( echo GIT PULL FAILED & pause & exit /b 1 )
+echo [1/4] Git pull ^(latest script + dump + APEX^) ...
+git rev-parse --is-inside-work-tree >nul 2>&1
+if errorlevel 1 ( echo Git repo na - pull skip, folder e ja ache tai use hobe ) else (
+  git pull
+  if errorlevel 1 ( echo GIT PULL FAILED & pause & exit /b 1 )
+)
 
 echo [2/4] Purono HMS_APP object muche fela ...
 sqlplus -S %DB% @sync\drop_for_import.sql
