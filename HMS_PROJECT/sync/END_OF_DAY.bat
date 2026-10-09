@@ -4,7 +4,7 @@ cd /d C:\HMS_PROJECT
 call sync\config.bat
 
 echo [1/3] Database export (structure + data) ...
-expdp %DB% SCHEMAS=HMS_APP DIRECTORY=HMS_DUMP_DIR DUMPFILE=hms_app.dmp LOGFILE=exp.log REUSE_DUMPFILES=YES
+expdp %DB% SCHEMAS=HMS_APP DIRECTORY=HMS_DUMP_DIR DUMPFILE=hms_app.dmp LOGFILE=exp.log REUSE_DUMPFILES=YES VERSION=19
 if errorlevel 1 ( echo EXPORT FAILED & pause & exit /b 1 )
 
 echo [2/3] APEX app export ...
