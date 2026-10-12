@@ -57,3 +57,92 @@ SELECT ROLE_NAME d, ROLE_ID r FROM HMS_ROLE WHERE IS_ACTIVE = 'Y' ORDER BY ROLE_
 2. P951_IS_ACTIVE — Switch, Label `Active`, On `Y` / Off `N`, Default Static `Y`, Required Off, seq 110, span 6
 
 Step 4: Load process, validations, buttons, processes — porer step.
+
+---
+## Step 4 — Page 951: load, validations, buttons, processes
+**Extra item:** `P951_IS_LOCKED` — Hidden (Region Account, seq 15) — Unlock button condition er jonno.
+
+**A. Load process** (Pre-Rendering ▸ Before Header ▸ Create Process) `Load user`, Execute Code, Condition **PL/SQL Expression** `:P951_USER_ID IS NOT NULL AND :REQUEST IS NULL` (validation error e re-render hole user er lekha value muche na jay):
+```plsql
+BEGIN
+    SELECT USERNAME, EMPLOYEE_ID, EMAIL, MOBILE, IS_ACTIVE, IS_LOCKED
+      INTO :P951_USERNAME, :P951_EMPLOYEE_ID, :P951_EMAIL, :P951_MOBILE, :P951_IS_ACTIVE, :P951_IS_LOCKED
+      FROM HMS_USER WHERE USER_ID = :P951_USER_ID;
+    SELECT LISTAGG(ROLE_ID, ':') WITHIN GROUP (ORDER BY ROLE_ID) INTO :P951_ROLES
+      FROM HMS_USER_ROLE WHERE USER_ID = :P951_USER_ID AND IS_ACTIVE = 'Y';
+END;
+```
+**B. Buttons** — region `Buttons` (Static Content, Slot Dialog Footer, Template Buttons Container): CANCEL (Close, Defined by Dynamic Action + DA Click → Cancel/Close Dialog), CREATE `Add User` (Next, Hot, Submit, Condition Item is NULL P951_USER_ID), SAVE `Save` (Next, Hot, Submit, Item is NOT NULL P951_USER_ID), RESET_PWD `Reset Password` (Previous, Redirect to URL `javascript:apex.confirm('Reset password to a temporary one?','RESET_PWD');`, Item is NOT NULL P951_USER_ID), UNLOCK `Unlock Account` (Previous, Submit, Execute Validations Off, Condition Item = Value P951_IS_LOCKED = Y).
+
+**C. Validations** (Processing ▸ Validating):
+1. `Username format` — Expression `REGEXP_LIKE(:P951_USERNAME, '^[A-Za-z0-9._-]{4,30}$')` · msg `Username must be 4-30 characters: letters, numbers, dot, underscore or hyphen.` · item P951_USERNAME · When Button Pressed CREATE
+2. `Username unique` — No Rows returned `SELECT 1 FROM HMS_USER WHERE UPPER(USERNAME) = UPPER(TRIM(:P951_USERNAME)) AND USER_ID <> NVL(:P951_USER_ID, -1)` · msg `This username already exists.` · CREATE
+3. `Password required` — Item is NOT NULL P951_PASSWORD · msg `Password is required.` · CREATE
+4. `Password length` — Expression `:P951_PASSWORD IS NULL OR LENGTH(:P951_PASSWORD) >= 8` · msg `Password must be at least 8 characters.` · CREATE
+5. `Passwords match` — Expression `:P951_PASSWORD = :P951_PASSWORD_CONFIRM` · msg `Passwords do not match.` · item P951_PASSWORD_CONFIRM · CREATE
+6. `Email format` — Expression `:P951_EMAIL IS NULL OR REGEXP_LIKE(:P951_EMAIL, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')` · msg `Enter a valid email address.`
+7. `Mobile format` — Expression `:P951_MOBILE IS NULL OR REGEXP_LIKE(:P951_MOBILE, '^(\+?880)?01[3-9][0-9]{8}$')` · msg `Enter a valid mobile number, e.g. 01712345678.`
+8. `Cannot deactivate yourself` — Expression `NOT (UPPER(:P951_USERNAME) = UPPER(:APP_USER) AND :P951_IS_ACTIVE = 'N')` · msg `You cannot deactivate your own account.` · item P951_IS_ACTIVE · Condition Item is NOT NULL P951_USER_ID
+
+**D. Processes** (Processing ▸ Processing), all Execute Code:
+1. `Create user` (seq 10, When Button Pressed CREATE):
+```plsql
+DECLARE
+    l_id NUMBER;
+BEGIN
+    l_id := PKG_AUTH.create_user(
+                p_username    => UPPER(TRIM(:P951_USERNAME)),
+                p_password    => :P951_PASSWORD,
+                p_branch_id   => :G_BRANCH_ID,
+                p_employee_id => :P951_EMPLOYEE_ID,
+                p_role_code   => NULL);
+    :P951_USER_ID := l_id;
+    UPDATE HMS_USER
+       SET EMAIL = :P951_EMAIL, MOBILE = :P951_MOBILE, IS_ACTIVE = NVL(:P951_IS_ACTIVE, 'Y')
+     WHERE USER_ID = l_id;
+    apex_application.g_print_success_message :=
+        'User ' || apex_escape.html(UPPER(TRIM(:P951_USERNAME))) || ' created. The user must change the password at first login.';
+END;
+```
+2. `Update user` (seq 10, SAVE):
+```plsql
+BEGIN
+    UPDATE HMS_USER
+       SET EMPLOYEE_ID = :P951_EMPLOYEE_ID, EMAIL = :P951_EMAIL,
+           MOBILE = :P951_MOBILE, IS_ACTIVE = :P951_IS_ACTIVE
+     WHERE USER_ID = :P951_USER_ID;
+    apex_application.g_print_success_message := 'User ' || apex_escape.html(:P951_USERNAME) || ' updated successfully.';
+END;
+```
+3. `Save roles` (seq 20, Request is contained in Value `CREATE,SAVE`):
+```plsql
+BEGIN
+    DELETE FROM HMS_USER_ROLE WHERE USER_ID = :P951_USER_ID;
+    INSERT INTO HMS_USER_ROLE (USER_ID, ROLE_ID)
+    SELECT :P951_USER_ID, TO_NUMBER(COLUMN_VALUE)
+      FROM TABLE(APEX_STRING.SPLIT(:P951_ROLES, ':'));
+END;
+```
+4. `Reset password` (seq 10, RESET_PWD) — NOTE: `PKG_AUTH.reset_password` FORCE_PWD_CHANGE='N' kore, tai porer UPDATE e abar 'Y':
+```plsql
+DECLARE
+    l_pwd VARCHAR2(50) := 'Hms@' || TO_CHAR(SYSDATE, 'YYYY') || '-' || TRUNC(DBMS_RANDOM.VALUE(1000, 9999));
+BEGIN
+    PKG_AUTH.reset_password(:P951_USERNAME, l_pwd);
+    UPDATE HMS_USER SET FORCE_PWD_CHANGE = 'Y' WHERE USER_ID = :P951_USER_ID;
+    apex_application.g_print_success_message :=
+        'Temporary password for ' || apex_escape.html(:P951_USERNAME) || ': <b>' || l_pwd ||
+        '</b> (shown once - the user must change it at next login).';
+END;
+```
+5. `Unlock account` (seq 10, UNLOCK):
+```plsql
+BEGIN
+    UPDATE HMS_USER SET IS_LOCKED = 'N', FAILED_ATTEMPTS = 0 WHERE USER_ID = :P951_USER_ID;
+    apex_application.g_print_success_message := 'Account ' || apex_escape.html(:P951_USERNAME) || ' unlocked.';
+END;
+```
+6. `Close Dialog` (Type Close Dialog, seq 100, Request is contained in Value `CREATE,SAVE,RESET_PWD,UNLOCK`).
+
+## Step 5 — Page 95: Edit link, Add User button, Dialog Closed DA
+(USER_ID Link ▸ Page 951, Set Items P951_USER_ID=#USER_ID#, Clear Cache 951; Add User button `AUTH_SECURITY`; DA Dialog Closed ▸ Refresh region Users.)
