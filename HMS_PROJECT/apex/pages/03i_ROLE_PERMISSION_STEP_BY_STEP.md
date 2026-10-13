@@ -57,7 +57,7 @@ Region `Actions` (Static Content, Buttons Container, seq 40, Condition Item is N
 ### Step 2 JavaScript (Page ▸ JavaScript ▸ Execute when Page Loads)
 ```
 (function () {
-  var $t = $(".hms-perm table").first();
+  var $t = $(".hms-perm table.t-Report-report").first();
   if (!$t.length) { return; }
   var others = "input[name='f03'],input[name='f04'],input[name='f05'],input[name='f06'],input[name='f07']";
   $t.find("th").each(function (i) {
