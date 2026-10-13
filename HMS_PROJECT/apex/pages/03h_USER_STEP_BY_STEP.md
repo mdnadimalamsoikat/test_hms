@@ -62,7 +62,7 @@ Step 4: Load process, validations, buttons, processes — porer step.
 ## Step 4 — Page 951: load, validations, buttons, processes
 **Extra item:** `P951_IS_LOCKED` — Hidden (Region Account, seq 15) — Unlock button condition er jonno.
 
-**A. Load process** (Pre-Rendering ▸ Before Header ▸ Create Process) `Load user`, Execute Code, Server-side Condition ▸ Type **Expression**, Language **PL/SQL** (24.2 e "PL/SQL Expression" naam nai), Expression `:P951_USER_ID IS NOT NULL AND :REQUEST IS NULL` (validation error e re-render hole user er lekha value muche na jay):
+**A. Load process** (Pre-Rendering ▸ Before Header ▸ Create Process) `Load user`, Execute Code, Server-side Condition ▸ Type **Expression**, Language **PL/SQL** (24.2 e "PL/SQL Expression" naam nai), Expression `:P951_USER_ID IS NOT NULL AND :P951_USERNAME IS NULL` (Clear Cache 951 er karone edit khulle USERNAME faka thake = load hoy; validation error e re-render hole USERNAME bhora = load hoy na, tai user er lekha value muche na. `:REQUEST IS NULL` er upor nirbhor kora jabe na):
 ```plsql
 BEGIN
     SELECT USERNAME, EMPLOYEE_ID, EMAIL, MOBILE, IS_ACTIVE, IS_LOCKED
