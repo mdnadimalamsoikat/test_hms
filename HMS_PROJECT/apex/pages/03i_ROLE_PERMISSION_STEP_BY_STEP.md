@@ -144,3 +144,47 @@ END;
 4. **View auto-tick rule** — Add/Edit/Delete/Print/Approve tick dile oi row er View tick; View tulle baki shob untick. Karon View chhara onno right er mane nei.
 5. **Save process** — protiti module (f01) er jonno `is_on(f0N, module)` dekhe 'Y'/'N' ber kore **MERGE INTO HMS_ROLE_PERMISSION** (thakle update, na thakle insert). Server e-o View='Y' force kore (JS bypass hole-o thik thake).
 6. **Condition `P96_ROLE_ID IS NOT NULL`** — role na bachle matrix dekhabe na (Save-er jonno role lagbei).
+
+---
+## Part F — line by line (shikhar jonno)
+
+### F1. JavaScript (Execute when Page Loads)
+1. `(function () { ... })();` — nijei-ke chalano function (IIFE). Vitorer variable (`$t`, `others`) global e leak kore na; page load hole sathe sathe chole.
+2. `var $t = $(".hms-perm table.t-Report-report").first();` — jQuery diye matrix table dhora. `$` = jQuery, `$t` er `$` shudhu naming convention (jQuery object bujhate).
+3. `if (!$t.length) { return; }` — table nai (role bacha hoyni, region hidden) hole kichu na kore ber hoye jao.
+4. `var others = "input[name='f03'],...,input[name='f07']";` — Add/Edit/Delete/Print/Approve checkbox er selector. `apex_item.checkbox2(3,...)` input er name `f03` banay. Comma = "ba".
+5. `$t.find("th").each(function (i) {` — protiti header cell e ghure ashe; `i` = 0,1,2…
+6. `if (i === 0) { return; }` — 0 = "Module" header, tate checkbox lagbe na. `each` er vitor `return` = continue.
+7. `var name = "f0" + (i + 1);` — header 1 (View) → `f02`, header 2 (Add) → `f03` … oi column er checkbox er name.
+8. `var $all = $('<input type="checkbox" ... style="display:block;margin:6px auto 0;">');` — notun checkbox element banay (ekhono page e nai). `display:block` = alada line, `margin:auto` = majhkhane.
+9. `$all.on("change", function () {…});` — header checkbox click hole:
+   - `$t.find("input[name='" + name + "']")` — oi column er shob checkbox.
+   - `.prop("checked", this.checked)` — `this` = header checkbox; tar tick (true/false) shobgulo te boshao.
+   - `.trigger("change")` — `.prop` nijei event dey na; trigger na korle niche er "View rule" chalto na.
+10. `$(this).append($all);` — `this` = ei `th`; checkbox ta lekhar **pore** (niche) bosao.
+11. `$t.on("change", others, function () {…});` — event delegation: table e ekta listener, vitorer je kono Add/Edit/… checkbox change hole chole.
+    - `if (this.checked)` — tick dile
+    - `$(this).closest("tr").find("input[name='f02']").prop("checked", true);` — ei checkbox er row (`closest("tr")`) er View (`f02`) tick koro.
+12. `$t.on("change", "input[name='f02']", …)` — View untick hole `others` shob oi row e untick. Karon View chhara onno right mane nei.
+
+### F2. Matrix SQL
+1. `apex_item.hidden(1, m.MODULE_ID)` — `<input type="hidden" name="f01" value="5">` banay. Protiti row er module id submit hoy (array `f01`).
+2. `|| '<span class="fa ...">'` — `||` = text jora. `NVL(m.ICON_CLASS,'fa-cube')` = icon na thakle default.
+3. `apex_escape.html(m.MODULE_NAME)` — naam e `<`/`&` thakleo page bhange na (security). Tai column er Escape = No dileo safe.
+4. `apex_item.checkbox2(2, m.MODULE_ID, NULL, CASE WHEN rp.CAN_VIEW='Y' THEN TO_CHAR(m.MODULE_ID) END)` — 1st = array number (f02), 2nd = value, 3rd = extra attributes (nai), 4th = **checked value**: ei value == 2nd value hole tick. CASE: 'Y' hole module id, na hole NULL → tick nai.
+5. `LEFT JOIN HMS_ROLE_PERMISSION rp ON ... AND rp.ROLE_ID = TO_NUMBER(:P96_ROLE_ID)` — LEFT JOIN: permission row na thakleo module dekhabe. Role condition **ON** e (WHERE e dile LEFT JOIN-er kaj nosto hoy).
+6. `ORDER BY m.DISPLAY_ORDER` — menu er kromey.
+
+### F3. Save process
+1. Browser e **tick na deya checkbox submit-i hoy na**. Tai `f01` (shob module) ar `f02..f07` (shudhu tick kora) milie dekhte hoy.
+2. `FUNCTION is_on(p_arr, p_mod)` — array te module id thakle 'Y', nahole 'N'. Type `apex_application_global.vc_arr2` = `g_f01..g_f50` er type.
+3. `FOR i IN 1 .. apex_application.g_f01.COUNT LOOP` — protiti module row.
+4. Nested `DECLARE … BEGIN … END;` — protiti row er nijoshyo variable (`l_add`, `l_edit`…).
+5. `l_view := CASE WHEN is_on(g_f02,…)='Y' OR 'Y' IN (l_add,…) THEN 'Y' ELSE 'N' END;` — server e-o rule: onno kono right Y hole View Y (JS bypass hole-o safe).
+6. `MERGE INTO HMS_ROLE_PERMISSION` — thakle UPDATE, na thakle INSERT (upsert). `USING (SELECT … FROM DUAL)` = ekta row banano; `ON` = kon row ke "ek" bolbo (ROLE_ID + MODULE_ID).
+7. Success message — `apex_application.g_print_success_message`; `apex_escape.html` diye role naam.
+8. COMMIT lage na — APEX request shesh e nije commit kore; error hole sob rollback.
+
+---
+## Page 97 note (Tabs Container)
+**Tabs Container region type na** — Type = **Static Content**, Appearance ▸ **Template = Tabs Container**. Child region er Layout ▸ **Parent Region** = oi region; child er Title = tab label.
