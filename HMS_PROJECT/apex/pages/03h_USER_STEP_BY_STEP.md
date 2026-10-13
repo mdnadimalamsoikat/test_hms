@@ -145,4 +145,16 @@ END;
 6. `Close Dialog` (Type Close Dialog, seq 100, Request is contained in Value `CREATE,SAVE,RESET_PWD,UNLOCK`).
 
 ## Step 5 — Page 95: Edit link, Add User button, Dialog Closed DA
-(USER_ID Link ▸ Page 951, Set Items P951_USER_ID=#USER_ID#, Clear Cache 951; Add User button `AUTH_SECURITY`; DA Dialog Closed ▸ Refresh region Users.)
+1. Column **USER_ID** ▸ Identification Type **Link** · Heading (ekta space) · Link ▸ Target: Type *Page in this Application*, Page `951`, Set Items `P951_USER_ID` = `#USER_ID#`, Clear Cache `951` · Link Text `<span class="fa fa-edit" aria-label="Edit"></span>`
+2. Button (region Users ▸ slot *Right of Interactive Report Search Bar*): Label `Add User`, Hot On, Icon `fa-plus`, Action *Redirect to Page in this Application* ▸ Page `951`, Clear Cache `951`.
+3. Dynamic Action: Name `Dialog Closed`, Event *Dialog Closed*, Selection Type *Region* = Users, True Action *Refresh* (Region Users).
+
+## Step 6 — Test
+1. Page 95: ADMIN row, shobuj `Active` badge, Roles = Super Administrator.
+2. Add User: `reception1`, email, mobile, password `Hms@12345` (confirm same), Role `Receptionist / Front Desk` ▸ green message `User RECEPTION1 created...`, row list e.
+3. Validation: duplicate username, password `abc`, mismatch, bad email/mobile, role chhara.
+4. Edit (pencil): username read-only, password nai, roles tick loaded. Role bodle Save ▸ `updated successfully.`
+5. Reset Password ▸ confirm ▸ message e temporary password ▸ oi password diye login ▸ Change Password page ashbe.
+6. Lock: `UPDATE HMS_USER SET IS_LOCKED='Y' WHERE USERNAME='RECEPTION1'; COMMIT;` ▸ list e lal `Locked` ▸ open ▸ `Unlock Account` ▸ Active.
+7. ADMIN edit ▸ Active off ▸ `You cannot deactivate your own account.`
+8. RECEPTION1 rekhe din (Sprint 4 e receptionist hishebe test korbo).
