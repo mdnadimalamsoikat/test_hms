@@ -52,3 +52,71 @@ Page ▸ JavaScript ▸ Execute when Page Loads: header "select all" + View-rule
 
 ## Step 3 — Save
 Region `Actions` (Static Content, Buttons Container, seq 40, Condition Item is NOT NULL P96_ROLE_ID): SAVE (`Save Permissions`, Next, Hot, Submit Page), DISCARD (`Discard Changes`, Previous, Redirect to Page 96, no Clear Cache). Process `Save permissions` (Execute Code, Processing, When Button Pressed SAVE) — code in chat/guide.
+
+---
+### Step 2 JavaScript (Page ▸ JavaScript ▸ Execute when Page Loads)
+```
+(function () {
+  var $t = $(".hms-perm table").first();
+  if (!$t.length) { return; }
+  var others = "input[name='f03'],input[name='f04'],input[name='f05'],input[name='f06'],input[name='f07']";
+  $t.find("th").each(function (i) {
+    if (i === 0) { return; }
+    var name = "f0" + (i + 1);
+    var $all = $('<input type="checkbox" class="hms-perm-all" title="Select all" aria-label="Select all">');
+    $all.on("change", function () {
+      $t.find("input[name='" + name + "']").prop("checked", this.checked).trigger("change");
+    });
+    $(this).prepend($all);
+  });
+  $t.on("change", others, function () {
+    if (this.checked) { $(this).closest("tr").find("input[name='f02']").prop("checked", true); }
+  });
+  $t.on("change", "input[name='f02']", function () {
+    if (!this.checked) { $(this).closest("tr").find(others).prop("checked", false); }
+  });
+})();
+```
+### Step 3 process `Save permissions` (Execute Code, PL/SQL, When Button Pressed SAVE)
+```
+DECLARE
+    l_role NUMBER := TO_NUMBER(:P96_ROLE_ID);
+    l_name HMS_ROLE.ROLE_NAME%TYPE;
+
+    FUNCTION is_on (p_arr IN apex_application_global.vc_arr2, p_mod IN VARCHAR2) RETURN VARCHAR2 IS
+    BEGIN
+        FOR i IN 1 .. p_arr.COUNT LOOP
+            IF p_arr(i) = p_mod THEN RETURN 'Y'; END IF;
+        END LOOP;
+        RETURN 'N';
+    END is_on;
+BEGIN
+    FOR i IN 1 .. apex_application.g_f01.COUNT LOOP
+        DECLARE
+            l_mod  VARCHAR2(30) := apex_application.g_f01(i);
+            l_add  VARCHAR2(1)  := is_on(apex_application.g_f03, l_mod);
+            l_edit VARCHAR2(1)  := is_on(apex_application.g_f04, l_mod);
+            l_del  VARCHAR2(1)  := is_on(apex_application.g_f05, l_mod);
+            l_prn  VARCHAR2(1)  := is_on(apex_application.g_f06, l_mod);
+            l_apr  VARCHAR2(1)  := is_on(apex_application.g_f07, l_mod);
+            l_view VARCHAR2(1);
+        BEGIN
+            l_view := CASE WHEN is_on(apex_application.g_f02, l_mod) = 'Y'
+                             OR 'Y' IN (l_add, l_edit, l_del, l_prn, l_apr)
+                           THEN 'Y' ELSE 'N' END;
+            MERGE INTO HMS_ROLE_PERMISSION t
+            USING (SELECT l_role AS ROLE_ID, TO_NUMBER(l_mod) AS MODULE_ID FROM DUAL) s
+               ON (t.ROLE_ID = s.ROLE_ID AND t.MODULE_ID = s.MODULE_ID)
+             WHEN MATCHED THEN UPDATE SET
+                  t.CAN_VIEW = l_view, t.CAN_ADD = l_add, t.CAN_EDIT = l_edit,
+                  t.CAN_DELETE = l_del, t.CAN_PRINT = l_prn, t.CAN_APPROVE = l_apr, t.IS_ACTIVE = 'Y'
+             WHEN NOT MATCHED THEN INSERT
+                  (ROLE_ID, MODULE_ID, CAN_VIEW, CAN_ADD, CAN_EDIT, CAN_DELETE, CAN_PRINT, CAN_APPROVE)
+                  VALUES (s.ROLE_ID, s.MODULE_ID, l_view, l_add, l_edit, l_del, l_prn, l_apr);
+        END;
+    END LOOP;
+    SELECT ROLE_NAME INTO l_name FROM HMS_ROLE WHERE ROLE_ID = l_role;
+    apex_application.g_print_success_message :=
+        'Permissions saved for role ' || apex_escape.html(l_name) || '. Users may need to sign in again.';
+END;
+```
