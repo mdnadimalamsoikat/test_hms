@@ -120,3 +120,8 @@ BEGIN
         'Permissions saved for role ' || apex_escape.html(l_name) || '. Users may need to sign in again.';
 END;
 ```
+
+---
+### Problem: JS chole kintu CSS (hms.css v12) lagena
+- Classic Report e **prothom `<table>` = `t-Report-pagination`**; asol matrix = `table.t-Report-report`. JS e `.hms-perm table.t-Report-report` use korun.
+- Static file replace na hole **Page 96 ▸ CSS ▸ Inline** e `hms.css` er v12 block ta (`/* ---- v12 ... */` theke shesh) paste korun. Pore static file thik hole Inline ta muche din.

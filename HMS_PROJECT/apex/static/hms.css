@@ -258,11 +258,15 @@ a { color: #0b6e99; }
 .a-IRR-table td[headers="MRP"] { font-weight:600; font-variant-numeric:tabular-nums; }
 
 /* ---- v12: Role & Permission matrix (Page 96) — region CSS Class: hms-perm ---- */
-.hms-perm .t-Report-report { width:100%; border-collapse:separate; border-spacing:0; }
-.hms-perm .t-Report-report th { text-align:center; white-space:nowrap; padding:12px 8px; border-bottom:2px solid #d5e3ea; }
-.hms-perm .t-Report-report td { text-align:center; padding:10px 8px; border-bottom:1px solid #edf2f5; }
-.hms-perm .t-Report-report th:first-child, .hms-perm .t-Report-report td:first-child { text-align:left; padding-left:18px; }
-.hms-perm .t-Report-report td:first-child { min-width:240px; }
+.hms-perm .t-Report, .hms-perm .t-Report-wrap { width:100%; }
+.hms-perm table.t-Report-report { width:100% !important; border-collapse:separate; border-spacing:0; background:#fff;
+    border:1px solid #dbe6ec; border-radius:10px; overflow:hidden; }
+.hms-perm table.t-Report-report th { background:#f1f6f9; color:#33505f; font-weight:600; font-size:.75rem; letter-spacing:.4px;
+    text-transform:uppercase; text-align:center; white-space:nowrap; padding:12px 8px; border:0; border-bottom:2px solid #d5e3ea; }
+.hms-perm table.t-Report-report td { text-align:center; padding:10px 8px; border:0; border-bottom:1px solid #edf2f5; }
+.hms-perm table.t-Report-report tr:last-child td { border-bottom:0; }
+.hms-perm table.t-Report-report th:first-child, .hms-perm table.t-Report-report td:first-child { text-align:left; padding-left:18px; width:36%; }
+.hms-perm table.t-Report-report tbody tr:hover td { background:#f4f9fc; }
 .hms-perm input[type=checkbox] { width:18px; height:18px; cursor:pointer; accent-color:var(--hms-primary); vertical-align:middle; }
 .hms-perm .hms-perm-all { margin-right:6px; }
 .hms-perm-ic { display:inline-block; width:26px; color:var(--hms-primary); text-align:center; margin-right:8px; }
