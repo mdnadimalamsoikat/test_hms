@@ -122,6 +122,25 @@ END;
 ```
 
 ---
-### Problem: JS chole kintu CSS (hms.css v12) lagena
-- Classic Report e **prothom `<table>` = `t-Report-pagination`**; asol matrix = `table.t-Report-report`. JS e `.hms-perm table.t-Report-report` use korun.
-- Static file replace na hole **Page 96 ▸ CSS ▸ Inline** e `hms.css` er v12 block ta (`/* ---- v12 ... */` theke shesh) paste korun. Pore static file thik hole Inline ta muche din.
+## Problems amra ja face korechi (shob solved)
+| Problem | Karon | Fix |
+|---|---|---|
+| Matrix e shudhu 15 row | Classic Report pagination 15 | Region ▸ Attributes ▸ Pagination ▸ Type **No Pagination (Show All Rows)**. Pagination on thakle `apex_item` array e shudhu dekhano row thake, Save baki module ke 'N' kore dey |
+| Label "Role Id" | APEX item name theke auto label | `P96_ROLE_ID` ▸ Label ▸ Label = `Role` |
+| Receptionist er default tick nei | Partial matrix theke Save → seed permission 'N' hoye gechhe | DELETE RECEPTION rows + INSERT Y/Y/Y/Y (DASHBOARD, PATIENT, APPOINTMENT, OPD) + COMMIT |
+| Header e tick-all checkbox ashe na | Region er **prothom `<table>`** = `t-Report-pagination`, asol matrix `table.t-Report-report` | JS e `$(".hms-perm table.t-Report-report")` |
+| Design change hoy na (v12) | Static file replace hoyni / selector | `hms.css` + `hms.min.css` duita replace + Ctrl+F5; na hole **Page ▸ CSS ▸ Inline** e v12 block |
+| Header checkbox cell er checkbox er sathe mele na | Header e checkbox lekhar bame (`prepend`) | `append` + `display:block; margin:6px auto 0` (lekha upore, checkbox niche, majhkhane) |
+
+## Console diagnostics (pore kaje lagbe)
+- Chrome Console e paste block: prothome hate `allow pasting` type korun.
+- `document.querySelector('.hms-perm table').className` — kon table dhorche dekhar jonno.
+- Static file thik kina: Static Application Files ▸ size: `hms.css` ~18.5 KB, `hms.min.css` ~14.1 KB.
+
+## Part E — code ta ki kore (jate nijeo likhte paren)
+1. **`apex_item.checkbox2(p_idx=>2, p_value=>module_id, p_attributes=>...)`** — report er protiti row te ekta checkbox banay. `p_idx` = array number (`f02` = View). Submit er por `apex_application.g_f02` e shudhu **tick kora** row er value ashe.
+2. **`f01` hidden (`apex_item.hidden`)** — protiti row er MODULE_ID. Tick na kora checkbox submit hoy na, tai amra f01 theke "shob module" ar f02..f07 theke "tick kora module" mila-i.
+3. **JS tick-all** — header `th` e `<input>` bosay, change e oi column er shob `input[name=f0N]` ke `checked` kore.
+4. **View auto-tick rule** — Add/Edit/Delete/Print/Approve tick dile oi row er View tick; View tulle baki shob untick. Karon View chhara onno right er mane nei.
+5. **Save process** — protiti module (f01) er jonno `is_on(f0N, module)` dekhe 'Y'/'N' ber kore **MERGE INTO HMS_ROLE_PERMISSION** (thakle update, na thakle insert). Server e-o View='Y' force kore (JS bypass hole-o thik thake).
+6. **Condition `P96_ROLE_ID IS NOT NULL`** — role na bachle matrix dekhabe na (Save-er jonno role lagbei).
