@@ -33,3 +33,11 @@ Ja jay: SQL script + **puro database (table + data + package)** + **APEX app**.
 ## Alternative (sync-er jhamela nai)
 - **Remote desktop:** Office PC on rekhe bashay theke AnyDesk / Chrome Remote Desktop diye connect. Ek DB, sync lage na. Internet stable lagbe.
 - **Cloud DB:** Oracle Cloud Always Free (Autonomous DB + APEX free). Dui PC theke browser e same DB. Long-term best.
+
+## Home PC te PDB (Pluggable) thakle (office = Non-CDB ORCL)
+PDB problem na. Shudhu 4 ta jaygay alada:
+1. **SYS connection** PDB service diye korun (SQL Developer: Service name = PDB naam, e.g. `ORCLPDB` / `XEPDB1` / `FREEPDB1`, Role = SYSDBA). Ba `ALTER SESSION SET CONTAINER = <pdb_naam>;` age run korun. Check: `SHOW CON_NAME` = PDB naam, `CDB$ROOT` na.
+2. `01_create_tablespaces.sql` e `DATA_PATH` = **PDB er** datafile folder (PDB er moddhe `SELECT NAME FROM V$DATAFILE;`).
+3. `02_create_user.sql`, `sync/00_setup_dump_dir.sql` — PDB er **bhitore** run (CDB$ROOT e korle ORA-65096).
+4. Connection string e SID na, **PDB service**: `localhost:1521/<pdb_naam>`  (impdp, SQL Developer HMS_APP connection, `sync/config.bat` `DB_SERVICE`).
+APEX 24.2 oi **PDB te install** thakte hobe: `SELECT VERSION FROM DBA_REGISTRY WHERE COMP_ID='APEX';` (PDB er bhitor theke).
