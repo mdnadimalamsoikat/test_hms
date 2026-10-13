@@ -63,11 +63,11 @@ Region `Actions` (Static Content, Buttons Container, seq 40, Condition Item is N
   $t.find("th").each(function (i) {
     if (i === 0) { return; }
     var name = "f0" + (i + 1);
-    var $all = $('<input type="checkbox" class="hms-perm-all" title="Select all" aria-label="Select all">');
+    var $all = $('<input type="checkbox" class="hms-perm-all" title="Select all" aria-label="Select all" style="display:block;margin:6px auto 0;">');
     $all.on("change", function () {
       $t.find("input[name='" + name + "']").prop("checked", this.checked).trigger("change");
     });
-    $(this).prepend($all);
+    $(this).append($all);
   });
   $t.on("change", others, function () {
     if (this.checked) { $(this).closest("tr").find("input[name='f02']").prop("checked", true); }
