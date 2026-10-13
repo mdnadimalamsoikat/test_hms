@@ -200,7 +200,7 @@ SELECT :P951_USER_ID, TO_NUMBER(COLUMN_VALUE) FROM TABLE(APEX_STRING.SPLIT(:P951
 Then **Close Dialog**. Validation: username unique (No Rows returned), password rule (Sprint 1 er motoi).
 
 ---
-## PAGE 96 — Role & Permission ⭐
+## PAGE 96 — Role & Permission ⭐  (IG NAY — manual matrix, dekhun `03i_ROLE_PERMISSION_STEP_BY_STEP.md`)
 **Create Page ▸ Blank** 96, Authorization **AUTH_SUPER**.
 - `P96_ROLE_ID` Select List (roles) ▸ Page Action on Selection **Submit Page**? → Na, **Redirect and Set Value**? Simple: DA Change → Refresh IG.
 - **[Region] Permissions** Interactive Grid, Static ID `perm_ig`, SQL:
