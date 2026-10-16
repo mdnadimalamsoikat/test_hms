@@ -68,3 +68,22 @@ CONFIG_ID Link (Page 971, Set Items `P971_CONFIG_ID`=`#CONFIG_ID#`, Clear Cache 
 
 ## Step 5 — Number Series tab (list) + 5B tab design
 Region `Number Series` (Classic Report, Standard, `hms-wide`, Parent `Settings Tabs`); SQL = series list with `next_number` = `prefix || lpad(current_no + 1, nvl(pad_length, 6), '0')`. Tab Title e icon + clear naam: `<span class="fa fa-sliders"></span> System Rules`, `<span class="fa fa-hashtag"></span> Document Numbers`. Region **Header Text** e `hms-note--info` box. Active tab er underline na — pill style: `hms.css` v14 (Page 97 ▸ CSS ▸ Inline e-o dewa jay).
+
+## Step 6 — Page 972 Document Number (modal form, Width 720)
+Wizard Form ▸ Modal Dialog ▸ HMS_NUMBER_SERIES ▸ columns SERIES_ID, BRANCH_ID, SERIES_TYPE, PREFIX, PAD_LENGTH, RESET_CYCLE, IS_ACTIVE (**CURRENT_NO, LAST_RESET_DATE ar audit 4 ta bad**). Items: SERIES_ID/BRANCH_ID Hidden (BRANCH_ID Default Item `G_BRANCH_ID`) · SERIES_TYPE Text Field Required Upper Read Only (Item is NOT NULL `P972_SERIES_ID`) · PREFIX Text Field Required Upper · PAD_LENGTH Number Field Required Min 3 Max 10 Default 6 · RESET_CYCLE Select List static (Never/NEVER, Yearly/YEARLY, Monthly/MONTHLY, Daily/DAILY) Default NEVER · IS_ACTIVE Switch Y/N Default Y. **`P972_CURRENT_NO`** Display Only, Source Type *SQL Query (return single value)* `select current_no from hms_number_series where series_id = :P972_SERIES_ID`, Used Always, Save Session State Off, Condition Item is NOT NULL `P972_SERIES_ID`. Caution region (`hms-note--warn`, seq 5). **Delete button muche din.** Validation `Document type is unique` (NOT Exists):
+```
+select 1
+  from hms_number_series
+ where upper(series_type) = upper(:P972_SERIES_TYPE)
+   and branch_id = :P972_BRANCH_ID
+   and series_id <> nvl(:P972_SERIES_ID, -1)
+```
+Success message process:
+```
+apex_application.g_print_success_message :=
+    'Numbering for <b>' || apex_escape.html(:P972_SERIES_TYPE) || '</b> saved successfully.';
+```
+Kano `Last Used No.` read-only: Admin vul number dile same MRN duibar hote pare.
+
+## Step 7 — Page 97 wiring (Number Series)
+SERIES_ID Link (Page 972, Set Items `P972_SERIES_ID`=`#SERIES_ID#`, Clear Cache 972, pencil Link Text, Escape No, Auth `AUTH_SUPER`) · DA `Dialog Closed Number Series` (Region `Number Series`, Refresh) · Page 972 Auth `AUTH_SUPER` · Add button **nai** (number type gulo program e fixed). Test pore ekhon `UPDATE HMS_NUMBER_SERIES SET PREFIX='OPD-', PAD_LENGTH=5 WHERE SERIES_TYPE='OPD'; COMMIT;`
