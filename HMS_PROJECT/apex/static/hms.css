@@ -277,3 +277,12 @@ a { color: #0b6e99; }
 .hms-wide table.t-Report-report { width:100% !important; }
 .hms-wide table.t-Report-report td:first-child, .hms-wide table.t-Report-report th:first-child { width:44px; text-align:center; }
 .hms-wide .t-Region-headerItems--buttons .t-Button { margin-left:8px; }
+
+/* ---- v14: pill tabs for Tabs Container (no underline) ---- */
+.t-TabsRegion-items { border-bottom:0 !important; }
+.t-TabsRegion-items ul { border:0 !important; gap:6px; }
+.t-TabsRegion-items li, .t-TabsRegion-items li a { border:0 !important; box-shadow:none !important; }
+.t-TabsRegion-items li::before, .t-TabsRegion-items li::after, .t-TabsRegion-items li a::before, .t-TabsRegion-items li a::after { display:none !important; }
+.t-TabsRegion-items li a { border-radius:999px !important; padding:8px 18px !important; background:#e8f1f6; color:#33505f !important; font-weight:600; }
+.t-TabsRegion-items li.apex-rds-selected a, .t-TabsRegion-items li.is-active a, .t-TabsRegion-items li.ui-tabs-active a,
+.t-TabsRegion-items li a[aria-selected="true"], .t-TabsRegion-items li[aria-selected="true"] a { background:#0b6e99 !important; color:#fff !important; }

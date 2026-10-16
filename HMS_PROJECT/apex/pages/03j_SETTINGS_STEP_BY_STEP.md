@@ -65,3 +65,6 @@ apex_application.g_print_success_message :=
 CONFIG_ID Link (Page 971, Set Items `P971_CONFIG_ID`=`#CONFIG_ID#`, Clear Cache 971, Link Text `<span class="fa fa-edit" aria-label="Edit"></span>`, Escape No, Auth `AUTH_SETUP_EDIT`) · Button `ADD_CONFIG` (Slot Right of Title, Hot, `fa-plus`, **Action = Redirect to Page in this Application**, Page 971, Clear Cache 971, Auth `AUTH_SETUP_ADD`) · DA `Dialog Closed` (Region Config, Refresh) · Page 97 Auth `AUTH_SETUP`, Page 971 Auth `AUTH_SETUP_EDIT`.
 **Problem:** Add Setting kaj kore na → button er default Action `Submit Page` chhilo; Redirect to Page 971 korte hobe.
 **Problem:** table chhoto / button title er gaye → CSS v13 `.hms-wide` (Inline CSS fallback) + Template Standard.
+
+## Step 5 — Number Series tab (list) + 5B tab design
+Region `Number Series` (Classic Report, Standard, `hms-wide`, Parent `Settings Tabs`); SQL = series list with `next_number` = `prefix || lpad(current_no + 1, nvl(pad_length, 6), '0')`. Tab Title e icon + clear naam: `<span class="fa fa-sliders"></span> System Rules`, `<span class="fa fa-hashtag"></span> Document Numbers`. Region **Header Text** e `hms-note--info` box. Active tab er underline na — pill style: `hms.css` v14 (Page 97 ▸ CSS ▸ Inline e-o dewa jay).
