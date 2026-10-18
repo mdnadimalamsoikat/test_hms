@@ -118,3 +118,17 @@ Purono `next_number` expression (shudhu `prefix || lpad(current_no+1,…)`) bhul
 ## Step 11 — Hospital Info tab (Branch list) + logo columns
 DB: `06_photo_mime_cols.sql` e `HMS_BRANCH.LOGO_MIME`, `LOGO_FILENAME` add kora hoyeche (barbar run safe) — Image Upload item er jonno lage.
 Region `Hospital Info` (Classic Report, Standard, `hms-wide`, Parent `Settings Tabs`, Title `<span class="fa fa-hospital-o"></span> Hospital Info`, Header Text = info note). List: edit link (Page 974), code, name, city, phone, Head Office badge, status badge. Button `Add Branch` (Auth `AUTH_SUPER`). Dialog Closed DA te 4th Refresh (Hospital Info).
+
+## Step 12 — Page 974 Hospital (modal form, Width 800, Auth `AUTH_SUPER`)
+Wizard Form ▸ Modal ▸ HMS_BRANCH (audit 4 ta bad; LOGO/LOGO_MIME/LOGO_FILENAME wizard e na ashle nije). Items (seq 10…160): BRANCH_ID Hidden · BRANCH_CODE Required Upper Read Only (Item is NOT NULL `P974_BRANCH_ID`) span 4 · BRANCH_NAME span 8 · ADDRESS_LINE1/2 span 12 · CITY/DISTRICT span 4 · DIVISION Select List (`select lookup_value d, lookup_value r from vw_lov_lookup where lookup_type='DIVISION' order by display_order`) · COUNTRY default `Bangladesh` · POST_CODE · LICENSE_NO · PHONE/EMAIL span 6 · **P974_LOGO** Image Upload (Source Database Column `LOGO`, Storage *BLOB column specified in Item Source*, MIME `LOGO_MIME`, Filename `LOGO_FILENAME`, Max 1000 KB) · IS_HEAD_OFFICE/IS_ACTIVE Switch Y/N. **Delete button muche din.** Validations: `Branch code is unique` (NOT Exists) · `Email format` (Expression/PL/SQL `:P974_EMAIL IS NULL OR REGEXP_LIKE(:P974_EMAIL, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')`) · `Only one head office` (NOT Exists `select 1 from hms_branch where :P974_IS_HEAD_OFFICE='Y' and is_head_office='Y' and branch_id <> nvl(:P974_BRANCH_ID,-1)`). Success message `Hospital <b>…</b> saved successfully.`
+
+## Step 13 — Page 97 wiring (Hospital Info)
+BRANCH_ID Link (Page 974, Set Items `P974_BRANCH_ID`=`#BRANCH_ID#`, Clear Cache 974, pencil, Escape No, Auth `AUTH_SUPER`) · Button `ADD_BRANCH` (Right of Title, Redirect 974, Auth `AUTH_SUPER`). **Sotorkota:** notun branch e `HMS_NUMBER_SERIES` row nai → `FN_GET_NEXT_NO` e `Number series not configured`. Test branch (`TST`) test shesh e delete korun.
+
+## Page 97 final checklist
+- [ ] 4 ta tab (System Rules, Document Numbers, Dropdown Lists, Hospital Info), pill style, info note protita tab e
+- [ ] Config / Number Series / Lookup / Branch — Add/Edit kaj kore, validation message English
+- [ ] Dialog Closed - refresh lists (`body`) — save er por list sathe sathe refresh
+- [ ] Logo upload + preview, Delete button kothao nai
+- [ ] Test data muchhe fela (TEST_KEY, NEB, TST), OPD prefix `OPD-`/digits 5 ferot
+- [ ] Inline CSS (`hms-wide`, pill tabs) — static `hms.css`/`hms.min.css` replace korle Inline muche din
