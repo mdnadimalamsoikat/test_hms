@@ -48,3 +48,13 @@ select replace(to_char(a.action_time, 'DD Mon YYYY HH24:MI'), ' ', unistr('\00A0
 ```
 Visible columns: WHEN_TXT `When`, ACTION_BADGE `Action` (Escape No), TABLE_LABEL `Record Type`, RECORD_ID `Record #`, COLUMN_LABEL `Field`, CHANGE_HTML `Change` (Escape No), ACTION_BY `By`, IP_ADDRESS `IP Address`. Hidden: AUDIT_ID, TABLE_NAME, ACTION_TYPE, ACTION_TIME, MODULE_NAME, OLD_VALUE, NEW_VALUE, ACTION_PERIOD.
 **Problem:** `When` column 4 line e bhenge jay → `unistr('\00A0')` (non-breaking space) diye space replace. **Problem:** date range facet `ORA-01841` → date ke text group (`ACTION_PERIOD`) kore checkbox facet.
+
+## Step 3 — Facets (Search region)
+Info note region `About` (Static Content, Blank with Attributes, seq 5, `hms-note--info`). Facets: `P98_SEARCH` (Search columns TABLE_LABEL, COLUMN_LABEL, ACTION_BY, OLD_VALUE, NEW_VALUE) · `P98_ACTION_PERIOD` Checkbox Group (Static: Today / Last 7 days / Last 30 days / Older) col `ACTION_PERIOD` · `P98_ACTION_TYPE` Checkbox Group (Insert;INSERT, Update;UPDATE, Delete;DELETE) col `ACTION_TYPE` · `P98_TABLE_NAME` Checkbox Group (SQL LOV `select initcap(replace(substr(table_name,5),'_',' ')) d, table_name r from (select distinct table_name from hms_audit_trail) order by 1`) col `TABLE_NAME` · `P98_ACTION_BY` Checkbox Group Distinct Values col `ACTION_BY`. Show Counts Yes, Zero Count Entries Hide.
+
+## Sprint 3 closing tests (see 03_SPRINT3_SETUP.md checklist)
+1. Page 95/951: `RECEPTION1` user banan (Role Receptionist) → sign out → login → **Force Password Change** page → notun password → home.
+2. Reception1 e menu: Dashboard/Patient/Appointment/OPD. Setup page (URL type korle) → access denied.
+3. Admin ▸ Role Permissions ▸ Receptionist ▸ `Setup / Master` View tick ▸ Save → reception1 sign out/in → Departments list dekhe, **Add button nai**. Tarpor ferot.
+4. Test data (Sprint 4 er jonno): 3 dept, 3 doctor + schedule, 10 service (5 lab), 2 ward / 10 bed, 20 medicine, 1 store.
+5. Export (`END_OF_DAY.bat` + APEX export) + commit.
