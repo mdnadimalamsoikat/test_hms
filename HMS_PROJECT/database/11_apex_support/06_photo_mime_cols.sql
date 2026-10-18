@@ -15,5 +15,7 @@ BEGIN
   add_col('HMS_EMPLOYEE', 'PHOTO_FILENAME', 'VARCHAR2(255)');
   add_col('HMS_PATIENT',  'PHOTO_MIME',     'VARCHAR2(100)');
   add_col('HMS_PATIENT',  'PHOTO_FILENAME', 'VARCHAR2(255)');
+  add_col('HMS_BRANCH',   'LOGO_MIME',      'VARCHAR2(100)');
+  add_col('HMS_BRANCH',   'LOGO_FILENAME',  'VARCHAR2(255)');
 END;
 /

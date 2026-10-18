@@ -114,3 +114,7 @@ Purono `next_number` expression (shudhu `prefix || lpad(current_no+1,…)`) bhul
                    else s.current_no + 1
                  end, nvl(s.pad_length, 6), '0')                       as next_number,
 ```
+
+## Step 11 — Hospital Info tab (Branch list) + logo columns
+DB: `06_photo_mime_cols.sql` e `HMS_BRANCH.LOGO_MIME`, `LOGO_FILENAME` add kora hoyeche (barbar run safe) — Image Upload item er jonno lage.
+Region `Hospital Info` (Classic Report, Standard, `hms-wide`, Parent `Settings Tabs`, Title `<span class="fa fa-hospital-o"></span> Hospital Info`, Header Text = info note). List: edit link (Page 974), code, name, city, phone, Head Office badge, status badge. Button `Add Branch` (Auth `AUTH_SUPER`). Dialog Closed DA te 4th Refresh (Hospital Info).
