@@ -96,3 +96,21 @@ Add button `ADD_LOOKUP` (region `Dropdown Lists`, Right of Title, Redirect Page 
 ## Problem: form save er por list refresh hoy na (3 tab)
 **Karon:** `Dialog Closed` event ta fire hoy **je element (button/link) dialog khulechhe** tar upor. DA er "When ▸ Region" oi element er region na hole DA kokhono chole na (Lookup tab e Add button `Dropdown Lists` region e, link `Lookup Values` e).
 **Fix (best):** ekta DA, tinta tab er jonno — Page 97 ▸ Dynamic Actions ▸ Dialog Closed ▸ Create: Name `Dialog Closed - refresh lists`, Event **Dialog Closed**, Selection Type **jQuery Selector**, jQuery Selector `body`. True Actions (3 ta, **Refresh**, Affected Elements ▸ Region): `Config`, `Number Series`, `Lookup Values`. Purono 3 ta Dialog Closed DA delete korun. (Event bubble kore `body` porjonto pouchhay, tai sob button/link cover hoy.)
+
+## Correction — Next Number (Document Numbers tab) + OPD daily keno
+`FN_GET_NEXT_NO` e asol number = `PREFIX` + **period** + `LPAD(no)`: YEARLY `BIL-2026-000001`, MONTHLY `PRFX-2610-…`, DAILY `OPD-261018-00001`, NEVER `MRN-0000001`. Tai daily number ek din er sathe onno din er **dupe hoy na** (`HMS_OPD_VISIT.VISIT_NO` UNIQUE). Din onujayi alada: `VISIT_DATE` column (filter/group). Daily keno: patient er "serial/token" — roj 1 theke, chhoto, daktar/receptionist dak dite subidha.
+Purono `next_number` expression (shudhu `prefix || lpad(current_no+1,…)`) bhul chhilo — replace korun:
+```
+       s.prefix
+         || case s.reset_cycle
+              when 'YEARLY'  then to_char(sysdate, 'YYYY')   || '-'
+              when 'MONTHLY' then to_char(sysdate, 'YYMM')   || '-'
+              when 'DAILY'   then to_char(sysdate, 'YYMMDD') || '-'
+            end
+         || lpad(case
+                   when s.reset_cycle = 'YEARLY'  and trunc(nvl(s.last_reset_date, date '1900-01-01'), 'YYYY') <> trunc(sysdate, 'YYYY') then 1
+                   when s.reset_cycle = 'MONTHLY' and trunc(nvl(s.last_reset_date, date '1900-01-01'), 'MM')   <> trunc(sysdate, 'MM')   then 1
+                   when s.reset_cycle = 'DAILY'   and trunc(nvl(s.last_reset_date, date '1900-01-01'))         <> trunc(sysdate)         then 1
+                   else s.current_no + 1
+                 end, nvl(s.pad_length, 6), '0')                       as next_number,
+```
