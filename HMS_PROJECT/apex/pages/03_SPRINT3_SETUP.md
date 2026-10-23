@@ -114,7 +114,7 @@ WHEN NOT MATCHED THEN INSERT (EMPLOYEE_ID, DOCTOR_CODE, SPECIALIZATION, QUALIFIC
      :P911_CONSULTATION_FEE, :P911_FOLLOWUP_FEE, :P911_FOLLOWUP_VALID_DAYS, :P911_DOCTOR_TYPE);
 ```
    ARP e **Return Primary Key(s) after Insert = Yes** (EMPLOYEE_ID pawar jonno).
-4. **Doctor Schedule** (sub-region, Condition doctor exists): Interactive Grid on `HMS_DOCTOR_SCHEDULE WHERE DOCTOR_ID = (SELECT DOCTOR_ID FROM HMS_DOCTOR WHERE EMPLOYEE_ID=:P911_EMPLOYEE_ID)`
+4. **Doctor Schedule** (sub-region, Condition doctor exists): **Classic Report + `Add Schedule` button ▸ modal Page 912** (IG NAY) — dekhun `03d_DOCTOR_SCHEDULE_STEP_BY_STEP.md`. Delete nai, **Active** switch Off. Validation: To > From, same doctor/same din e overlap nai.
    - DAY_OF_WEEK Select Static: `Sunday;SUNDAY,Monday;MONDAY,Tuesday;TUESDAY,Wednesday;WEDNESDAY,Thursday;THURSDAY,Friday;FRIDAY,Saturday;SATURDAY`
    - START_TIME/END_TIME Text (Placeholder `09:00`, validation regex `^[0-2][0-9]:[0-5][0-9]$`)
    - SLOT_DURATION_MIN default 10, MAX_SLOTS 30, BRANCH_ID default G_BRANCH_ID, DOCTOR_ID default (PL/SQL expression above)
@@ -200,51 +200,32 @@ SELECT :P951_USER_ID, TO_NUMBER(COLUMN_VALUE) FROM TABLE(APEX_STRING.SPLIT(:P951
 Then **Close Dialog**. Validation: username unique (No Rows returned), password rule (Sprint 1 er motoi).
 
 ---
-## PAGE 96 — Role & Permission ⭐  (IG NAY — manual matrix, dekhun `03i_ROLE_PERMISSION_STEP_BY_STEP.md`)
-**Create Page ▸ Blank** 96, Authorization **AUTH_SUPER**.
-- `P96_ROLE_ID` Select List (roles) ▸ Page Action on Selection **Submit Page**? → Na, **Redirect and Set Value**? Simple: DA Change → Refresh IG.
-- **[Region] Permissions** Interactive Grid, Static ID `perm_ig`, SQL:
-```sql
-SELECT rp.PERMISSION_ID, m.MODULE_ID, m.MODULE_NAME, rp.ROLE_ID,
-       NVL(rp.CAN_VIEW,'N') CAN_VIEW, NVL(rp.CAN_ADD,'N') CAN_ADD, NVL(rp.CAN_EDIT,'N') CAN_EDIT,
-       NVL(rp.CAN_DELETE,'N') CAN_DELETE, NVL(rp.CAN_PRINT,'N') CAN_PRINT, NVL(rp.CAN_APPROVE,'N') CAN_APPROVE
-  FROM HMS_APP_MODULE m
-  LEFT JOIN HMS_ROLE_PERMISSION rp ON rp.MODULE_ID = m.MODULE_ID AND rp.ROLE_ID = :P96_ROLE_ID
- WHERE m.IS_ACTIVE = 'Y'
- ORDER BY m.DISPLAY_ORDER
-```
-  Page Items to Submit `P96_ROLE_ID` · Edit Enabled (**Update only**) · MODULE_NAME Display Only · PERMISSION_ID, MODULE_ID, ROLE_ID Hidden · primary key column = MODULE_ID
-  CAN_* columns ▸ Type **Switch** (On Y / Off N)
-  Save target ▸ **PL/SQL Code**:
-```plsql
-MERGE INTO HMS_ROLE_PERMISSION t
-USING (SELECT :P96_ROLE_ID ROLE_ID, :MODULE_ID MODULE_ID FROM DUAL) s
-   ON (t.ROLE_ID = s.ROLE_ID AND t.MODULE_ID = s.MODULE_ID)
- WHEN MATCHED THEN UPDATE SET CAN_VIEW=:CAN_VIEW, CAN_ADD=:CAN_ADD, CAN_EDIT=:CAN_EDIT,
-      CAN_DELETE=:CAN_DELETE, CAN_PRINT=:CAN_PRINT, CAN_APPROVE=:CAN_APPROVE, IS_ACTIVE='Y'
- WHEN NOT MATCHED THEN INSERT (ROLE_ID, MODULE_ID, CAN_VIEW, CAN_ADD, CAN_EDIT, CAN_DELETE, CAN_PRINT, CAN_APPROVE)
-      VALUES (s.ROLE_ID, s.MODULE_ID, :CAN_VIEW, :CAN_ADD, :CAN_EDIT, :CAN_DELETE, :CAN_PRINT, :CAN_APPROVE);
-```
-- [DA] P96_ROLE_ID Change → Refresh `perm_ig`
-- Button SAVE (Hot) → Action *Defined by DA*? IG er nijer Save button use korun (toolbar), ba page button → Submit + *Interactive Grid - Automatic Row Processing* process (wizard toiri).
-- Role add: small IG region upore `HMS_ROLE` (ROLE_CODE, ROLE_NAME, IS_ACTIVE).
+## PAGE 96 — Role & Permission ⭐ (IG NAY — manual matrix) → **`03i_ROLE_PERMISSION_STEP_BY_STEP.md`**
+- Role select `P96_ROLE_ID` ▸ Classic Report matrix (`hms-perm`, **No Pagination**, 22 module) ▸ checkbox arrays `f01`–`f07` ▸ Save process **MERGE** (View sob somoy `Y`).
+- Permission session shuru-r somoy load hoy ▸ change dekhte **sign out ▸ login**.
+- ✅ RECEPTION e Setup/Master View dile Departments dekha jay kintu **Add button nai**; revert korle menu abar 4 ta.
 
-✅ RECEPTION role e PHARMACY view off → oi user er menu te Pharmacy nai.
 
 ---
-## PAGE 97 — System Settings (3 tabs, IG each)
-Tabs Container: **Config** (`HMS_SYSTEM_CONFIG WHERE BRANCH_ID=:G_BRANCH_ID`) · **Number Series** (`HMS_NUMBER_SERIES` — CURRENT_NO read-only, AUTH_SUPER) · **Lookup** (`HMS_LOOKUP_MASTER`, filter on LOOKUP_TYPE) · **Branch** (`HMS_BRANCH` form, LOGO image upload).
+## PAGE 97 — System Settings (4 tabs, **Classic Report + modal form**, IG NAY) → **`03j_SETTINGS_STEP_BY_STEP.md`**
+- Tabs (Static Content + Template *Tabs Container*): **Config** (`HMS_SYSTEM_CONFIG`, modal 971) · **Number Series** (`HMS_NUMBER_SERIES`, modal 972, edit `AUTH_SUPER`) · **Lookup** (`HMS_LOOKUP_MASTER`, modal 973) · **Branch** (`HMS_BRANCH`, modal 974, LOGO upload).
+- Design: Number Series / Lookup / Branch e **Delete nai** (deactivate); Lookup Code ar BRANCH_CODE save er pore read-only.
+- Notun branch e `HMS_NUMBER_SERIES` row thakbe na ▸ `FN_GET_NEXT_NO` fail korbe ▸ notun branch er jonno series copy script lagbe.
 
-## PAGE 98 — Audit Trail Viewer
-Faceted Search on `HMS_AUDIT_TRAIL` (read only), facets: TABLE_NAME, ACTION_TYPE, ACTION_BY, ACTION_TIME range. Authorization **AUTH_SUPER**. Column OLD_VALUE / NEW_VALUE truncate 100 char.
-Tab 2 (optional): `HMS_LOGIN_HISTORY` report · Tab 3: `HMS_ERROR_LOG` (developer debug).
+## PAGE 98 — Audit Trail Viewer (Classic Report + Faceted Search) → **`03k_AUDIT_STEP_BY_STEP.md`**
+- `HMS_AUDIT_TRAIL` (read only). Column: When · Action badge (Insert/Update/Delete) · Table · Record · Field · Change (old struck → new bold) · By · IP. Order `ACTION_TIME DESC, AUDIT_ID DESC`, 25 row.
+- Facets: Search, Period, Action, Table, User. **Date-range facet nai** (ORA-01841 hoy).
+- Authorization **AUTH_SUPER**. **Ekhon shudhu Patient change audit hoy** (`TRG_AUDIT_PATIENT`); onno table er jonno alada trigger lagbe.
+- Optional (pore): Login History / Error Log page (ex. Page 99).
+
 
 ## Sprint 3 checklist
-- [ ] Dept, Employee+Doctor+Schedule, Service+Parameter+Range, Ward/Bed, Medicine, Supplier, Store
-- [ ] User create → login with new user → force pwd change
-- [ ] Role permission change → menu change
-- [ ] **Test data dhukan**: 3 dept, 3 doctor (schedule shoho), 10 service (5 lab with parameter/range), 2 ward 10 bed, 20 medicine, 1 store — Sprint 4 er jonno lagbe
-- [ ] Export + commit
+- [x] Dept, Employee+Doctor (+ Schedule: **Classic Report + modal Page 912**, `03d`), Service+Parameter+Range, Ward/Bed, Medicine
+- [x] User create (`RECEPTION1`) ▸ login ✅
+- [ ] Force Password Change e Page 2 khole na ▸ **Sprint 4 er age fix korte hobe** (Page 2 Mode / redirect)
+- [x] Role permission change → menu change ✅ (RECEPTION menu = Dashboard, Patient, Appointment, OPD; Setup page URL e denied)
+- [x] **Test data:** 3 dept, 3 doctor (schedule shoho), service 26 (LAB 11), ward 4/bed 36, medicine 20, store 3
+- [ ] Export + commit (`END_OF_DAY.bat` ▸ `hms_app.dmp` + APEX export `f101.sql`)
 
 ## Problem hole (quick fix)
 | Problem | Fix |
