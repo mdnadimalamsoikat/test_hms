@@ -123,8 +123,10 @@ Page Designer ▸ Page 9999:
 ## E. Page 2 — Change Password
 🎯 User nijer password bodlabe; notun user first login e ekhane ashbe.
 
-👉 Create Page ▸ **Blank Page** ▸ Page Number `2` ▸ Name `Change Password` ▸ Page Mode **Modal Dialog** ▸ Navigation Menu: No ▸ Create.
-Page properties ▸ Security ▸ Authorization Scheme = **Must Not Be Public User** (login kora sobai).
+⚠️ **Page 2 = NORMAL page (Modal Dialog NOY).** Karon: Force Password Change redirect kore sorasori Page 2 e pathay — Blank Page ke Modal banale template Dialog thake na, tai `APEX.DIALOG.PAGE.ERROR` (*Dialog page 2 cannot be rendered*) ashe ar login atke jay.
+
+👉 Create Page ▸ **Blank Page** ▸ Page Number `2` ▸ Name `Change Password` ▸ Page Mode **Normal** ▸ Navigation Menu: No ▸ Create.
+Page properties ▸ **Appearance ▸ Page Template = `Minimal (No Navigation)`** (na pele `Standard`) · Security ▸ Authorization Scheme = **Must Not Be Public User**.
 
 **Region** `Change Password` (Static Content). **Items** (Type **Password**, Value Required **On**):
 | Item | Label |
@@ -136,14 +138,18 @@ Page properties ▸ Security ▸ Authorization Scheme = **Must Not Be Public Use
 **Buttons:**
 | Button | Label | Hot | Action |
 |---|---|---|---|
-| CANCEL | Cancel | No | Defined by Dynamic Action → DA Click ▸ **Cancel Dialog** |
+| CANCEL | Cancel | No | **Redirect to Page in this Application** ▸ Page `1` · Server-side Condition ▸ Expression (PL/SQL) `NVL(:G_FORCE_PWD,'N') <> 'Y'` (force change e Cancel lukano) |
 | SAVE | Change Password | **Yes** | Submit Page |
 
-**Validation** (Processing tab ▸ Validations ▸ Create) ▸ Name `Password Rules` ▸ Type **Function Body (returning Error Text)** ▸ When Button Pressed `SAVE`:
-```plsql
-IF :P2_NEW_PWD <> :P2_CONFIRM_PWD THEN RETURN 'Notun password duibar same hoy nai'; END IF;
-IF LENGTH(:P2_NEW_PWD) < 8 OR NOT REGEXP_LIKE(:P2_NEW_PWD,'[0-9]') OR NOT REGEXP_LIKE(:P2_NEW_PWD,'[A-Z]') THEN
-   RETURN 'Min 8 character, 1 boro hater okkhor + 1 number lagbe';
+**Validation** (Processing tab ▸ Validations ▸ Create) ▸ Name `Password Rules` ▸ Type **Function Body (returning Error Text)** ▸ Error Display Location `Inline with Field and in Notification` ▸ Associated Item `P2_NEW_PWD` ▸ **Server-side Condition = none** (When Button Pressed khali — Submit kora ekmatro button SAVE, tai button-er nam vul hole validation na chola atkano jay):
+```
+IF :P2_NEW_PWD <> :P2_CONFIRM_PWD THEN
+   RETURN 'New password and confirm password do not match.';
+END IF;
+IF LENGTH(:P2_NEW_PWD) < 8
+   OR NOT REGEXP_LIKE(:P2_NEW_PWD, '[0-9]')
+   OR NOT REGEXP_LIKE(:P2_NEW_PWD, '[A-Z]') THEN
+   RETURN 'Password must be at least 8 characters and include one uppercase letter and one number.';
 END IF;
 RETURN NULL;
 ```
@@ -155,11 +161,11 @@ PKG_AUTH.change_password(:APP_USER, :P2_OLD_PWD, :P2_NEW_PWD);
 :G_FORCE_PWD := 'N';
 ```
 🎯 Keno: package purono pwd check kore, hash kore save kore, `FORCE_PWD_CHANGE='N'` kore. `:G_FORCE_PWD := 'N'` → ei session e ar Page 2 te pathabe na.
-Success Message `Password change hoyeche.`
+Success Message `Password changed successfully.`
 
-**Process 2** ▸ Type **Close Dialog** ▸ When Button Pressed `SAVE`.
+**Branch** (Processing ▸ Branches ▸ Create Branch) ▸ Name `Go to Home` ▸ Point **After Processing** ▸ Type **Page or URL (Redirect)** ▸ Page `1` ▸ Condition **Button Pressed = SAVE**. (Close Dialog process **lagbe na** — Normal page.)
 
-✅ Vul current pwd → error · rule vango → error · thik → success → logout ▸ notun pwd diye login.
+✅ Vul current pwd → error · rule vango → error · thik → Dashboard + success message → logout ▸ notun pwd diye login.
 
 ---
 ## F. Force Password Change (Page 2 banano-r **pore**)
@@ -176,9 +182,18 @@ Success Message `Password change hoyeche.`
 
 ✅ Test:
 ```sql
-UPDATE HMS_USER SET FORCE_PWD_CHANGE='Y' WHERE USERNAME='ADMIN'; COMMIT;
+UPDATE HMS_USER SET FORCE_PWD_CHANGE='Y' WHERE USERNAME='RECEPTION1'; COMMIT;
 ```
-Login → Page 2 ashe → pwd change → dashboard. (Atke gele: `UPDATE ... SET FORCE_PWD_CHANGE='N'` + COMMIT.)
+Logout ▸ login ▸ Change Password page ashe (Cancel button nai) ▸ pwd change ▸ Dashboard.
+(Atke gele: `UPDATE ... SET FORCE_PWD_CHANGE='N'` + COMMIT.)
+⚠️ `PKG_AUTH.reset_password` flag `N` kore dey — force korte chaile abar `UPDATE ... 'Y'`. `G_FORCE_PWD` shudhu **login er somoy** load hoy.
+
+### Problem hole
+| Problem | Fix |
+|---|---|
+| Login er por login page ei theke jay / `APEX.DIALOG.PAGE.ERROR` | Page 2 Modal chilo — Page Mode **Normal** + Template `Minimal (No Navigation)` |
+| `Your session has ended` (f?p URL e) | URL e purono/vul session id — Dashboard URL er `session=` er songkha copy korun |
+| Password Rules error dekhay na | Validation Condition khali korun, SAVE button Action = Submit Page |
 
 ---
 ## G. Navigation Bar (upore dane user menu)

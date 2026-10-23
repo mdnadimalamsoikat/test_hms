@@ -3,6 +3,7 @@
 🎯 **Ei sprint e ki hobe:** Department, Doctor, Schedule, Service/Price, User/Role — OPD/Billing/Lab er age ei master data lagbe.
 
 ## Shuru-r age (check)
+- [ ] **DB fix:** `database/11_apex_support/07_default_on_null_ids.sql` run (nahole form save e `ORA-01400: cannot insert NULL into ..._ID`)
 - [ ] Sprint 1 complete
 - [ ] AUTH_SETUP*, AUTH_SECURITY, AUTH_SUPER scheme
 
@@ -14,6 +15,39 @@
 
 Master page = **Report + Modal Form** pair. Prothom ta (Department) puro detail e; baki gula same pattern + ja alada.
 Page group banan: **Shared Components ▸ Page Groups ▸ Create** `Setup` — protiti setup page ▸ Identification ▸ Page Group = Setup (organize).
+
+## 🎨 Design standard (Setup page gulo — sob page e ekoi look)
+> Sprint 2 er moto `hms.css` + `hms.min.css` (notun v5) **duita-i** replace kore Ctrl+F5 korun.
+
+| Jaygay | Ki korben | Kano |
+|---|---|---|
+| Page title | Page ▸ Title e chhoto, bujhar moto naam (`Departments`, `Users & Access`) · Page Group **Setup** | Breadcrumb + nil title bar auto |
+| List page (IR) | Region ▸ Appearance ▸ Template **Standard** · Icon `fa-building-o` (page er jonno alada) · Toolbar e **Search bar** rakhun, baki column sob dekhabe na — prothome **6–8 ta** column dekhan, baki *Actions ▸ Columns* e | Kom column = dekhte sundor, druto bujha jay |
+| Active/Inactive | Plain `Y/N` na — **badge** (`hms-badge hms-st-Y` Active sobuj, `hms-st-N` Inactive dhusor) | Ek nojore status |
+| Summary strip | Page 90/95 er upore choto **KPI card** (nicher *Dynamic Content* region) | Dashboard feel |
+| Modal form | Dialog **Width 720** (choto) / **960** (boro) · Footer e buttons: Cancel (bame), Delete (danger), Save (Hot, dane) | Standard software pattern |
+| Form item | Sob item **Template Optional - Floating**, Y/N gulo **Switch**, choto option (Gender) **Radio Pill** | Modern look |
+| Grid row | IG te `Edit ▸ Enabled`, toolbar e *Save* **Hot**, Actions ▸ Report ▸ Save as Default | |
+| Date | Date Picker **Format `DD/MM/YYYY`** shob jaygay (Sprint 2 er ORA-01843 er shikkha) | |
+| Empty state | Report ▸ Messages ▸ *No data found*: `No data found. Click "Add" to create one.` | |
+
+**Summary strip region** (Page 90 / 95 / 91 er upore) — Region ▸ Type **Dynamic Content** ▸ PL/SQL Function Body returning CLOB, Template **Blank with Attributes**, Static ID `summary`:
+```plsql
+DECLARE
+  l_tot NUMBER; l_act NUMBER; l_clin NUMBER;
+BEGIN
+  SELECT COUNT(*), SUM(CASE WHEN IS_ACTIVE='Y' THEN 1 ELSE 0 END),
+         SUM(CASE WHEN DEPT_TYPE='CLINICAL' THEN 1 ELSE 0 END)
+    INTO l_tot, l_act, l_clin
+    FROM HMS_DEPARTMENT WHERE BRANCH_ID = :G_BRANCH_ID;
+  RETURN '<div class="hms-kpi-row">'
+    || '<div class="hms-kpi blue"><div class="hms-kpi-val">'||l_tot||'</div><div class="hms-kpi-lbl">Total Departments</div></div>'
+    || '<div class="hms-kpi green"><div class="hms-kpi-val">'||NVL(l_act,0)||'</div><div class="hms-kpi-lbl">Active</div></div>'
+    || '<div class="hms-kpi teal"><div class="hms-kpi-val">'||NVL(l_clin,0)||'</div><div class="hms-kpi-lbl">Clinical</div></div>'
+    || '</div>';
+END;
+```
+Dialog Closed DA te ei region o **Refresh** korben (Page 90 e). Page 95 (User) er jonno: Total users · Active · **Locked** (`hms-kpi red`) · Never logged in.
 
 ---
 ## PATTERN — Department (Page 90 list + 901 form)
@@ -27,13 +61,14 @@ Wizard 2 ta page banabe + edit link column.
 - Region source e SQL change (join kore naam dekhano):
 ```sql
 SELECT d.DEPT_ID, d.DEPT_CODE, d.DEPT_NAME, d.DEPT_TYPE, p.DEPT_NAME PARENT_DEPT,
-       TRIM(e.FIRST_NAME||' '||e.LAST_NAME) HOD, d.FLOOR_NO, d.ROOM_NO, d.EXTENSION_NO, d.IS_ACTIVE
+       TRIM(e.FIRST_NAME||' '||e.LAST_NAME) HOD, d.FLOOR_NO, d.ROOM_NO, d.EXTENSION_NO, d.IS_ACTIVE,
+       CASE d.IS_ACTIVE WHEN 'Y' THEN 'Active' ELSE 'Inactive' END STATUS_TXT
   FROM HMS_DEPARTMENT d
   LEFT JOIN HMS_DEPARTMENT p ON p.DEPT_ID = d.PARENT_DEPT_ID
   LEFT JOIN HMS_EMPLOYEE  e ON e.EMPLOYEE_ID = d.HOD_EMPLOYEE_ID
  WHERE d.BRANCH_ID = :G_BRANCH_ID
 ```
-- Column DEPT_ID ▸ Type **Hidden**? Na — link column already. IS_ACTIVE ▸ HTML Expression `<span class="hms-badge #IS_ACTIVE#">#IS_ACTIVE#</span>` (CSS e Y/N color chaile add: `.hms-badge.Y{background:#2e7d32}.hms-badge.N{background:#999}`)
+- Column **IS_ACTIVE** ▸ Type **Hidden Column**. Column **STATUS_TXT** ▸ Heading `Status` ▸ HTML Expression `<span class="hms-badge hms-st-#IS_ACTIVE#">#STATUS_TXT#</span>` (CSS `hms.css` e ache). DEPT_ID = edit link column (pencil icon) — sundor korte Link ▸ Link Icon `<span aria-label="Edit" class="fa fa-edit"></span>`
 - Run ▸ Actions ▸ **Format / Highlight**: IS_ACTIVE = 'N' → gray row ▸ Actions ▸ **Save Report ▸ As Default Report Settings (Primary)** (developer hisebe) — sobai ei layout dekhbe
 - Attributes ▸ Download: CSV, HTML, PDF, **XLSX** ON
 - Button CREATE (wizard toiri) ▸ Label `Add Department` ▸ Hot ▸ fa-plus ▸ Authorization **AUTH_SETUP_ADD**
@@ -52,7 +87,7 @@ SELECT d.DEPT_ID, d.DEPT_CODE, d.DEPT_NAME, d.DEPT_TYPE, p.DEPT_NAME PARENT_DEPT
 | P901_FLOOR_NO / ROOM_NO / EXTENSION_NO | Text | Span 4 each |
 | P901_IS_ACTIVE | **Switch** | On `Y` Off `N`, Default Y |
 - Buttons: CANCEL (Cancel Dialog) · DELETE (Danger, confirm, AUTH_SUPER) · SAVE / CREATE (Hot)
-- Validation: `Unique code` ▸ Type *No Rows returned* ▸ `SELECT 1 FROM HMS_DEPARTMENT WHERE DEPT_CODE=:P901_DEPT_CODE AND BRANCH_ID=:G_BRANCH_ID AND DEPT_ID<>NVL(:P901_DEPT_ID,-1)` ▸ `Ei code age theke ache`
+- Validation: `Unique code` ▸ Type *No Rows returned* ▸ `SELECT 1 FROM HMS_DEPARTMENT WHERE DEPT_CODE=:P901_DEPT_CODE AND BRANCH_ID=:G_BRANCH_ID AND DEPT_ID<>NVL(:P901_DEPT_ID,-1)` ▸ `This code already exists.`
 - Processes: ARP (wizard) → Close Dialog (wizard)
 - Page 90 e: **[DA] Dialog Closed** ▸ Selection Type Region (report) ▸ True: Refresh region (wizard 24.2 nijei dey, check korun)
 
@@ -62,8 +97,8 @@ SELECT d.DEPT_ID, d.DEPT_CODE, d.DEPT_NAME, d.DEPT_TYPE, p.DEPT_NAME PARENT_DEPT
 ## PAGE 91 / 911 — Employee + Doctor
 Create Page ▸ IR + Form (91/911, Modal, width **960**), table `HMS_EMPLOYEE`.
 911 layout: **Tabs Container** er bhitore 3 sub-region:
-1. **Personal** – EMPLOYEE_CODE (auto: Default PL/SQL `FN_GET_NEXT_NO(:G_BRANCH_ID,'EMPLOYEE')` shudhu create e → Default ▸ Type *PL/SQL Expression*), FIRST/LAST_NAME, GENDER (radio pill), DOB, NID, BLOOD_GROUP, PHONE, EMAIL, PRESENT_ADDRESS, PHOTO (Image Upload BLOB)
-2. **Job** – DEPT_ID (VW_LOV_DEPARTMENT), DESIGNATION_ID (`SELECT DESIGNATION_NAME d, DESIGNATION_ID r FROM HMS_DESIGNATION ORDER BY DESIGNATION_LEVEL`), JOINING_DATE, EMPLOYEE_TYPE, REPORTING_TO (popup employee), BANK_NAME / BANK_ACCOUNT_NO / TIN_NO (Authorization AUTH_SUPER)
+1. **Personal** – EMPLOYEE_CODE (**Display Only** `(Auto)` — save er somoy toiri hobe, niche dekhun), FIRST/LAST_NAME, GENDER (radio pill), DOB, NID, BLOOD_GROUP, PHONE, EMAIL, PRESENT_ADDRESS, PHOTO (Image Upload BLOB — ⚠️ `HMS_EMPLOYEE` e MIME column nai; age `database/11_apex_support/06_photo_mime_cols.sql` run korun, tarpor Item ▸ Settings e MIME Type Column `PHOTO_MIME`, Filename `PHOTO_FILENAME`)
+2. **Job** – DEPT_ID (VW_LOV_DEPARTMENT), DESIGNATION_ID (`SELECT DESIGNATION_NAME d, DESIGNATION_ID r FROM HMS_DESIGNATION ORDER BY DESIGNATION_LEVEL`), JOINING_DATE, EMPLOYEE_TYPE (Select Static `Permanent;PERMANENT,Contract;CONTRACT,Visiting;VISITING,Intern;INTERN,Trainee;TRAINEE` — DB CHECK er sathe mile), REPORTING_TO (popup employee), BANK_NAME / BANK_ACCOUNT_NO / TIN_NO (Authorization AUTH_SUPER)
 3. **Doctor Info** (Condition: designation doctor type ba switch `P911_IS_DOCTOR`) – non-table items:
    `P911_IS_DOCTOR` (Switch), `P911_DOCTOR_CODE`, `P911_SPECIALIZATION`, `P911_QUALIFICATION`, `P911_BMDC_REG_NO`, `P911_CONSULTATION_FEE`, `P911_FOLLOWUP_FEE`, `P911_FOLLOWUP_VALID_DAYS`, `P911_DOCTOR_TYPE` (Select: FULL_TIME, PART_TIME, VISITING, CONSULTANT, RESIDENT)
    - Source ▸ Type **Null** (form table er na), load: Pre-Rendering process `SELECT ... INTO :P911_... FROM HMS_DOCTOR WHERE EMPLOYEE_ID=:P911_EMPLOYEE_ID` (exception no_data_found null)
@@ -79,10 +114,19 @@ WHEN NOT MATCHED THEN INSERT (EMPLOYEE_ID, DOCTOR_CODE, SPECIALIZATION, QUALIFIC
      :P911_CONSULTATION_FEE, :P911_FOLLOWUP_FEE, :P911_FOLLOWUP_VALID_DAYS, :P911_DOCTOR_TYPE);
 ```
    ARP e **Return Primary Key(s) after Insert = Yes** (EMPLOYEE_ID pawar jonno).
-4. **Doctor Schedule** (sub-region, Condition doctor exists): Interactive Grid on `HMS_DOCTOR_SCHEDULE WHERE DOCTOR_ID = (SELECT DOCTOR_ID FROM HMS_DOCTOR WHERE EMPLOYEE_ID=:P911_EMPLOYEE_ID)`
+4. **Doctor Schedule** (sub-region, Condition doctor exists): **Classic Report + `Add Schedule` button ▸ modal Page 912** (IG NAY) — dekhun `03d_DOCTOR_SCHEDULE_STEP_BY_STEP.md`. Delete nai, **Active** switch Off. Validation: To > From, same doctor/same din e overlap nai.
    - DAY_OF_WEEK Select Static: `Sunday;SUNDAY,Monday;MONDAY,Tuesday;TUESDAY,Wednesday;WEDNESDAY,Thursday;THURSDAY,Friday;FRIDAY,Saturday;SATURDAY`
    - START_TIME/END_TIME Text (Placeholder `09:00`, validation regex `^[0-2][0-9]:[0-5][0-9]$`)
    - SLOT_DURATION_MIN default 10, MAX_SLOTS 30, BRANCH_ID default G_BRANCH_ID, DOCTOR_ID default (PL/SQL expression above)
+
+**Employee Code auto (save e toiri — gap hoy na):** Processing ▸ ARP er **age** (Sequence 5) `[Process] Generate Employee Code` · Execute Code · When Button Pressed **CREATE**:
+```plsql
+:P911_EMPLOYEE_CODE := FN_GET_NEXT_NO(:G_BRANCH_ID,'EMPLOYEE');   -- EMP-00001
+```
+(Item P911_EMPLOYEE_CODE ▸ Type Display Only ▸ **Save Session State = Yes** ▸ Source ▸ Used **Always, replacing any existing value in session state**.)
+> ⚠️ Item Default e `FN_GET_NEXT_NO` dile form **khulleii** number kharach hoy (Cancel korleo) — tai save e korun.
+
+**Doctor Code:** `HMS_DOCTOR.DOCTOR_CODE` NOT NULL, kintu `DOCTOR` number series nai. `P911_DOCTOR_CODE` ▸ Default PL/SQL Expression (create e) `'DR-' || :P911_EMPLOYEE_CODE`, Required. Ba Save Doctor process e `NVL(:P911_DOCTOR_CODE, 'DR-'||:P911_EMPLOYEE_CODE)`.
 
 Page 91 IR source: employee + dept + designation + `CASE WHEN EXISTS(doctor) THEN 'Doctor' END`.
 
@@ -101,7 +145,7 @@ IR + Form, table `HMS_SERVICE_MASTER`, 921 width 960.
 ## PAGE 93 — Ward & Bed (Master-Detail)
 Create Page ▸ **Master Detail** ▸ Style **Stacked** ▸ Master `HMS_WARD` (PK WARD_ID) ▸ Detail `HMS_BED` (FK WARD_ID).
 - Master IG: WARD_CODE, WARD_NAME, WARD_TYPE (Select: GENERAL, CABIN, ICU, CCU, NICU, PICU, HDU, ISOLATION, MATERNITY, POST_OP, EMERGENCY), FLOOR_NO, GENDER_ALLOWED, DEPT_ID, BRANCH_ID (hidden default), IS_ACTIVE switch
-- Detail IG: BED_NO, BED_TYPE, DAILY_CHARGE, SERVICE_ID (VW_LOV_SERVICE WHERE category BED), BED_STATUS (**Read-only** — system change kore; default AVAILABLE), IS_ACTIVE
+- Detail IG: BED_NO, BED_TYPE (Select Static `General;GENERAL,Cabin AC;CABIN_AC,Cabin Non-AC;CABIN_NON_AC,Suite;SUITE,ICU;ICU,CCU;CCU,NICU;NICU,Cradle;CRADLE`), DAILY_CHARGE, SERVICE_ID (VW_LOV_SERVICE WHERE category BED), BED_STATUS (**Read-only** · default `AVAILABLE` · DB: AVAILABLE/OCCUPIED/RESERVED/MAINTENANCE/CLEANING), IS_ACTIVE
 - Master where: `BRANCH_ID = :G_BRANCH_ID`
 - Authorization AUTH_SETUP
 
@@ -121,6 +165,7 @@ SELECT u.USER_ID, u.USERNAME, TRIM(e.FIRST_NAME||' '||e.LAST_NAME) EMPLOYEE,
   FROM HMS_USER u LEFT JOIN HMS_EMPLOYEE e ON e.EMPLOYEE_ID=u.EMPLOYEE_ID
 ```
 IS_LOCKED = 'Y' → red highlight. Authorization **AUTH_SECURITY**.
+Badge: SQL e `CASE WHEN u.IS_LOCKED='Y' THEN 'Locked' WHEN u.IS_ACTIVE='Y' THEN 'Active' ELSE 'Inactive' END STATUS_TXT, CASE WHEN u.IS_LOCKED='Y' THEN 'LOCK' ELSE u.IS_ACTIVE END STATUS_CLS` → HTML Expression `<span class="hms-badge hms-st-#STATUS_CLS#">#STATUS_TXT#</span>`.
 
 Page 951 — **Blank Page** (Form wizard na — password hash er jonno), Modal 640:
 | Item | Type | Note |
@@ -142,7 +187,7 @@ SELECT LISTAGG(ROLE_ID, ':') WITHIN GROUP (ORDER BY ROLE_ID) INTO :P951_ROLES
 Buttons & processes:
 | Button | Process |
 |---|---|
-| CREATE | `:P951_USER_ID := PKG_AUTH.create_user(:P951_USERNAME, :P951_PASSWORD, :G_BRANCH_ID, :P951_EMPLOYEE_ID, NULL);` then Save Roles |
+| CREATE | (Password min **8 character** — PKG_AUTH rule; `FORCE_PWD_CHANGE` DB default `Y`, alada update lagbe na) `:P951_USER_ID := PKG_AUTH.create_user(:P951_USERNAME, :P951_PASSWORD, :G_BRANCH_ID, :P951_EMPLOYEE_ID, NULL);` then Save Roles |
 | SAVE | `UPDATE HMS_USER SET EMPLOYEE_ID=:P951_EMPLOYEE_ID, EMAIL=:P951_EMAIL, MOBILE=:P951_MOBILE, IS_ACTIVE=:P951_IS_ACTIVE WHERE USER_ID=:P951_USER_ID;` then Save Roles |
 | RESET_PWD (`Reset Password`, confirm) | `PKG_AUTH.reset_password(:P951_USERNAME, 'Hms@' || TO_CHAR(SYSDATE,'YYYY')); UPDATE HMS_USER SET FORCE_PWD_CHANGE='Y' WHERE USER_ID=:P951_USER_ID;` Success `Temporary password: Hms@2026` |
 | UNLOCK | `UPDATE HMS_USER SET IS_LOCKED='N', FAILED_ATTEMPTS=0 WHERE USER_ID=:P951_USER_ID;` (Condition locked) |
@@ -155,51 +200,32 @@ SELECT :P951_USER_ID, TO_NUMBER(COLUMN_VALUE) FROM TABLE(APEX_STRING.SPLIT(:P951
 Then **Close Dialog**. Validation: username unique (No Rows returned), password rule (Sprint 1 er motoi).
 
 ---
-## PAGE 96 — Role & Permission ⭐
-**Create Page ▸ Blank** 96, Authorization **AUTH_SUPER**.
-- `P96_ROLE_ID` Select List (roles) ▸ Page Action on Selection **Submit Page**? → Na, **Redirect and Set Value**? Simple: DA Change → Refresh IG.
-- **[Region] Permissions** Interactive Grid, Static ID `perm_ig`, SQL:
-```sql
-SELECT rp.PERMISSION_ID, m.MODULE_ID, m.MODULE_NAME, rp.ROLE_ID,
-       NVL(rp.CAN_VIEW,'N') CAN_VIEW, NVL(rp.CAN_ADD,'N') CAN_ADD, NVL(rp.CAN_EDIT,'N') CAN_EDIT,
-       NVL(rp.CAN_DELETE,'N') CAN_DELETE, NVL(rp.CAN_PRINT,'N') CAN_PRINT, NVL(rp.CAN_APPROVE,'N') CAN_APPROVE
-  FROM HMS_APP_MODULE m
-  LEFT JOIN HMS_ROLE_PERMISSION rp ON rp.MODULE_ID = m.MODULE_ID AND rp.ROLE_ID = :P96_ROLE_ID
- WHERE m.IS_ACTIVE = 'Y'
- ORDER BY m.DISPLAY_ORDER
-```
-  Page Items to Submit `P96_ROLE_ID` · Edit Enabled (**Update only**) · MODULE_NAME Display Only · PERMISSION_ID, MODULE_ID, ROLE_ID Hidden · primary key column = MODULE_ID
-  CAN_* columns ▸ Type **Switch** (On Y / Off N)
-  Save target ▸ **PL/SQL Code**:
-```plsql
-MERGE INTO HMS_ROLE_PERMISSION t
-USING (SELECT :P96_ROLE_ID ROLE_ID, :MODULE_ID MODULE_ID FROM DUAL) s
-   ON (t.ROLE_ID = s.ROLE_ID AND t.MODULE_ID = s.MODULE_ID)
- WHEN MATCHED THEN UPDATE SET CAN_VIEW=:CAN_VIEW, CAN_ADD=:CAN_ADD, CAN_EDIT=:CAN_EDIT,
-      CAN_DELETE=:CAN_DELETE, CAN_PRINT=:CAN_PRINT, CAN_APPROVE=:CAN_APPROVE, IS_ACTIVE='Y'
- WHEN NOT MATCHED THEN INSERT (ROLE_ID, MODULE_ID, CAN_VIEW, CAN_ADD, CAN_EDIT, CAN_DELETE, CAN_PRINT, CAN_APPROVE)
-      VALUES (s.ROLE_ID, s.MODULE_ID, :CAN_VIEW, :CAN_ADD, :CAN_EDIT, :CAN_DELETE, :CAN_PRINT, :CAN_APPROVE);
-```
-- [DA] P96_ROLE_ID Change → Refresh `perm_ig`
-- Button SAVE (Hot) → Action *Defined by DA*? IG er nijer Save button use korun (toolbar), ba page button → Submit + *Interactive Grid - Automatic Row Processing* process (wizard toiri).
-- Role add: small IG region upore `HMS_ROLE` (ROLE_CODE, ROLE_NAME, IS_ACTIVE).
+## PAGE 96 — Role & Permission ⭐ (IG NAY — manual matrix) → **`03i_ROLE_PERMISSION_STEP_BY_STEP.md`**
+- Role select `P96_ROLE_ID` ▸ Classic Report matrix (`hms-perm`, **No Pagination**, 22 module) ▸ checkbox arrays `f01`–`f07` ▸ Save process **MERGE** (View sob somoy `Y`).
+- Permission session shuru-r somoy load hoy ▸ change dekhte **sign out ▸ login**.
+- ✅ RECEPTION e Setup/Master View dile Departments dekha jay kintu **Add button nai**; revert korle menu abar 4 ta.
 
-✅ RECEPTION role e PHARMACY view off → oi user er menu te Pharmacy nai.
 
 ---
-## PAGE 97 — System Settings (3 tabs, IG each)
-Tabs Container: **Config** (`HMS_SYSTEM_CONFIG WHERE BRANCH_ID=:G_BRANCH_ID`) · **Number Series** (`HMS_NUMBER_SERIES` — CURRENT_NO read-only, AUTH_SUPER) · **Lookup** (`HMS_LOOKUP_MASTER`, filter on LOOKUP_TYPE) · **Branch** (`HMS_BRANCH` form, LOGO image upload).
+## PAGE 97 — System Settings (4 tabs, **Classic Report + modal form**, IG NAY) → **`03j_SETTINGS_STEP_BY_STEP.md`**
+- Tabs (Static Content + Template *Tabs Container*): **Config** (`HMS_SYSTEM_CONFIG`, modal 971) · **Number Series** (`HMS_NUMBER_SERIES`, modal 972, edit `AUTH_SUPER`) · **Lookup** (`HMS_LOOKUP_MASTER`, modal 973) · **Branch** (`HMS_BRANCH`, modal 974, LOGO upload).
+- Design: Number Series / Lookup / Branch e **Delete nai** (deactivate); Lookup Code ar BRANCH_CODE save er pore read-only.
+- Notun branch e `HMS_NUMBER_SERIES` row thakbe na ▸ `FN_GET_NEXT_NO` fail korbe ▸ notun branch er jonno series copy script lagbe.
 
-## PAGE 98 — Audit Trail Viewer
-Faceted Search on `HMS_AUDIT_TRAIL` (read only), facets: TABLE_NAME, ACTION_TYPE, ACTION_BY, ACTION_TIME range. Authorization **AUTH_SUPER**. Column OLD_VALUE / NEW_VALUE truncate 100 char.
-Tab 2 (optional): `HMS_LOGIN_HISTORY` report · Tab 3: `HMS_ERROR_LOG` (developer debug).
+## PAGE 98 — Audit Trail Viewer (Classic Report + Faceted Search) → **`03k_AUDIT_STEP_BY_STEP.md`**
+- `HMS_AUDIT_TRAIL` (read only). Column: When · Action badge (Insert/Update/Delete) · Table · Record · Field · Change (old struck → new bold) · By · IP. Order `ACTION_TIME DESC, AUDIT_ID DESC`, 25 row.
+- Facets: Search, Period, Action, Table, User. **Date-range facet nai** (ORA-01841 hoy).
+- Authorization **AUTH_SUPER**. **Ekhon shudhu Patient change audit hoy** (`TRG_AUDIT_PATIENT`); onno table er jonno alada trigger lagbe.
+- Optional (pore): Login History / Error Log page (ex. Page 99).
+
 
 ## Sprint 3 checklist
-- [ ] Dept, Employee+Doctor+Schedule, Service+Parameter+Range, Ward/Bed, Medicine, Supplier, Store
-- [ ] User create → login with new user → force pwd change
-- [ ] Role permission change → menu change
-- [ ] **Test data dhukan**: 3 dept, 3 doctor (schedule shoho), 10 service (5 lab with parameter/range), 2 ward 10 bed, 20 medicine, 1 store — Sprint 4 er jonno lagbe
-- [ ] Export + commit
+- [x] Dept, Employee+Doctor (+ Schedule: **Classic Report + modal Page 912**, `03d`), Service+Parameter+Range, Ward/Bed, Medicine
+- [x] User create (`RECEPTION1`) ▸ login ✅
+- [ ] Force Password Change e Page 2 khole na ▸ **Sprint 4 er age fix korte hobe** (Page 2 Mode / redirect)
+- [x] Role permission change → menu change ✅ (RECEPTION menu = Dashboard, Patient, Appointment, OPD; Setup page URL e denied)
+- [x] **Test data:** 3 dept, 3 doctor (schedule shoho), service 26 (LAB 11), ward 4/bed 36, medicine 20, store 3
+- [ ] Export + commit (`END_OF_DAY.bat` ▸ `hms_app.dmp` + APEX export `f101.sql`)
 
 ## Problem hole (quick fix)
 | Problem | Fix |
@@ -207,3 +233,10 @@ Tab 2 (optional): `HMS_LOGIN_HISTORY` report · Tab 3: `HMS_ERROR_LOG` (develope
 | LOV khali | Age er master e data nai (jemon Dept na thakle Employee te dept list khali) |
 | Check constraint error (ORA-02290) | Select List er value guide er static list theke hubohu (boro hater) |
 | Notun user login korte pare na | User e role assign + FORCE_PWD_CHANGE='Y' hole Page 2 ashbe (Sprint 1 E, F) |
+| Employee/Doctor save e ORA-02290 (EMPLOYEE_TYPE/DOCTOR_TYPE) | Select List static value guide er list theke hubohu (upper case, `_` shoho) |
+| Employee code e gap (EMP-00001, 00003...) | Code Item Default e na, save er somoy *Generate Employee Code* process e (upore) |
+| Date ORA-01843 | Date Picker Format `DD/MM/YYYY` + TO_DATE mask ek |
+| Modal title/color purono | `hms.css` **ar** `hms.min.css` duita-i replace + Ctrl+F5 |
+| Save e `ORA-01400: cannot insert NULL into (...._ID)` | APEX ID e NULL pathay, DEFAULT SEQ.NEXTVAL kaj kore na → `07_default_on_null_ids.sql` run (DEFAULT ON NULL) |
+| Save e `ORA-01400: cannot insert NULL into (...CREATED_DATE)` | `07_default_on_null_ids.sql` abar run (notun version) + form theke CREATED_*/UPDATED_* item delete |
+| Edit Save e `ORA-01407 cannot update ... CREATED_DATE to NULL` | Form e P_CREATED_*/UPDATED_* item ache — delete korun |
