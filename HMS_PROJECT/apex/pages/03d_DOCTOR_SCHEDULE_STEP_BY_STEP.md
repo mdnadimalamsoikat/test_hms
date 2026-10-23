@@ -108,7 +108,7 @@ Test pass hole:
 3. Processing ▸ Processes ▸ `Weekly Schedule - Save Interactive Grid Data` — Delete.
 4. Notun list region er Title `Weekly Schedule` kora (jodi `(New)` thake).
 
-## STEP 2 — Note (doctor save er age) — designed message
+## STEP 4B — Note (doctor save er age) — designed message
 Rendering tree ▸ region **Doctor Info** ▸ right-click ▸ **Create Sub Region**:
 | Property | Value |
 |---|---|
