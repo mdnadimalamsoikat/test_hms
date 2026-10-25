@@ -41,3 +41,24 @@ PDB problem na. Shudhu 4 ta jaygay alada:
 3. `02_create_user.sql`, `sync/00_setup_dump_dir.sql` — PDB er **bhitore** run (CDB$ROOT e korle ORA-65096).
 4. Connection string e SID na, **PDB service**: `localhost:1521/<pdb_naam>`  (impdp, SQL Developer HMS_APP connection, `sync/config.bat` `DB_SERVICE`).
 APEX 24.2 oi **PDB te install** thakte hobe: `SELECT VERSION FROM DBA_REGISTRY WHERE COMP_ID='APEX';` (PDB er bhitor theke).
+
+---
+
+## DB restore / PC bodoler por: object check (must)
+
+Ek PC theke arek PC te DB niye ele kichu trigger/function/view hariye jete pare
+(example: `TRG_APPOINTMENT_BI` na thakle Page 30 e `ORA-01400 ... APPOINTMENT_NO`).
+Toad (HMS_APP) e chalan - ekhane sob row `VALID` / `ENABLED` hote hobe:
+
+```
+SELECT object_name, object_type, status FROM user_objects
+ WHERE object_name IN ('TRG_APPOINTMENT_BI','TRG_EMPLOYEE_CODE_BI','TRG_DOCTOR_CODE_BI',
+                       'TRG_BILLING_SYNC_OPD_PAY','FN_OPD_FEE','FN_OPD_IS_FOLLOWUP',
+                       'VW_OPD_TOKEN_SLIP','VW_DOCTOR_QUEUE','VW_OPD_DASHBOARD')
+ ORDER BY object_type, object_name;
+
+SELECT trigger_name, status FROM user_triggers WHERE table_name = 'HMS_APPOINTMENT';
+```
+
+Kono object na thakle repo r `database/11_apex_support/` (08, 09, 10, 11 number file)
+ebong `database/06_triggers/TRG_AUTO_CODES.sql` Toad e F5 (Run as Script) diye chalan - sob file re-runnable.
