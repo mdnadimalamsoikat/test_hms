@@ -62,3 +62,33 @@ SELECT trigger_name, status FROM user_triggers WHERE table_name = 'HMS_APPOINTME
 
 Kono object na thakle repo r `database/11_apex_support/` (08, 09, 10, 11 number file)
 ebong `database/06_triggers/TRG_AUTO_CODES.sql` Toad e F5 (Run as Script) diye chalan - sob file re-runnable.
+
+
+---
+
+## FULL RESTORE: HMS_APP user DROP + notun create + dump import (clean slate)
+
+`START_OF_DAY.bat` sudhu **object** muche import kore. Jodi **user shoho puro muchhe** notun kore ante chan
+(user e agey theke bhul/ajana object, ba import fail hole), tahole `sync\FULL_RESTORE.bat`.
+
+Ja kore:
+1. Confirm chay (YES likhte hobe)
+2. `git pull` (thakle)
+3. SYS password chay -> `sync\full_reset_user.sql`: HMS_APP er session kill -> `DROP USER HMS_APP CASCADE` -> notun `CREATE USER` + grant + `HMS_DUMP_DIR`
+4. `impdp` (`sync\dump\hms_app.dmp`)
+5. `apex\f101.sql` import (thakle)
+6. `sync\post_import_check.sql`: recompile + INVALID list + 13 ta must-have object + row count
+
+### Ek PC (Home) theke onno PC (Office) e replace korar niyom
+1. **Home PC (jekhane latest kaj):** App Builder theke app 101 export -> `C:\HMS_PROJECT\apex\f101.sql` (replace) -> `sync\END_OF_DAY.bat` (expdp + git push). Git na thakle `C:\HMS_PROJECT` folder pendrive e copy.
+2. **Office PC:** `git pull` (ba pendrive theke `sync\dump\hms_app.dmp` + `apex\f101.sql` copy). `sync\config.bat` e Office er `DB_SERVICE=localhost:1521/ORCL` + `DB_PASS` thik ache kina dekhun.
+3. Toad / SQL tab e HMS_APP **Disconnect**.
+4. `sync\FULL_RESTORE.bat` double-click -> `YES` -> SYS password.
+5. Shesh e "INVALID objects" = no rows, "13 ta must-have" sob `VALID`/`ENABLED` hote hobe.
+
+Manual korle (Toad e): `sync\full_reset_user.sql` SYS (HMS_SYS) connection e F5 (`&1` pop-up e HMS_APP password), tarpor CMD e:
+`impdp HMS_APP/<pass>@localhost:1521/ORCL SCHEMAS=HMS_APP DIRECTORY=HMS_DUMP_DIR DUMPFILE=hms_app.dmp LOGFILE=imp.log`
+tarpor `sqlplus HMS_APP/<pass>@localhost:1521/ORCL @sync\post_import_check.sql`.
+
+> Tablespace (HMS_DATA/HMS_INDEX/HMS_LOB) drop hoy na. Office e na thakle age `00_setup/01_create_tablespaces.sql`.
+> Ei PC te unsaved kaj thakle FULL_RESTORE e **haray** - age END_OF_DAY.
