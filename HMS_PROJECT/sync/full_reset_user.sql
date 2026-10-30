@@ -1,0 +1,94 @@
+/* =============================================================================
+   full_reset_user.sql   -   SYS AS SYSDBA diye chalan (FULL_RESTORE.bat eta call kore)
+   Kaj : HMS_APP user DROP (sob table/data soho) -> notun kore CREATE -> grant -> dump directory.
+         Tablespace (HMS_DATA/HMS_INDEX/HMS_LOB) ager moto thakbe, eta bhange na.
+   Param: &1 = HMS_APP er notun password  (config.bat er DB_PASS)
+   Re-runnable. Toad e chalale password pop-up e &1 er value likhun.
+   PDB PC te: PDB service diye connect korun (CDB$ROOT e na) - ORA-65096 elaw.
+   ============================================================================= */
+SET DEFINE ON
+SET VERIFY OFF
+SET SERVEROUTPUT ON
+WHENEVER SQLERROR EXIT FAILURE
+
+PROMPT >>> Connected container:
+SHOW CON_NAME
+
+PROMPT >>> [1] Tablespace check
+DECLARE
+    n NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO n FROM DBA_TABLESPACES WHERE TABLESPACE_NAME IN ('HMS_DATA','HMS_INDEX','HMS_LOB');
+    IF n < 3 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'HMS_DATA / HMS_INDEX / HMS_LOB tablespace nai. Age 00_setup/01_create_tablespaces.sql chalan.');
+    END IF;
+END;
+/
+
+PROMPT >>> [2] HMS_APP er sob session kill (Toad / SQL tab bondho korle bhalo)
+BEGIN
+    FOR s IN (SELECT SID, SERIAL# FROM V$SESSION WHERE USERNAME = 'HMS_APP') LOOP
+        BEGIN
+            EXECUTE IMMEDIATE 'ALTER SYSTEM KILL SESSION ''' || s.SID || ',' || s.SERIAL# || ''' IMMEDIATE';
+        EXCEPTION WHEN OTHERS THEN NULL;
+        END;
+    END LOOP;
+    DBMS_LOCK.SLEEP(3);
+END;
+/
+
+PROMPT >>> [3] DROP USER HMS_APP CASCADE
+DECLARE
+    n NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO n FROM DBA_USERS WHERE USERNAME = 'HMS_APP';
+    IF n = 1 THEN
+        EXECUTE IMMEDIATE 'DROP USER HMS_APP CASCADE';
+        DBMS_OUTPUT.PUT_LINE('HMS_APP dropped.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('HMS_APP chilo na - skip.');
+    END IF;
+END;
+/
+
+PROMPT >>> [4] CREATE USER HMS_APP
+CREATE USER HMS_APP IDENTIFIED BY "&1"
+  DEFAULT TABLESPACE HMS_DATA
+  TEMPORARY TABLESPACE TEMP
+  QUOTA UNLIMITED ON HMS_DATA
+  QUOTA UNLIMITED ON HMS_INDEX
+  QUOTA UNLIMITED ON HMS_LOB;
+
+GRANT CREATE SESSION           TO HMS_APP;
+GRANT CREATE TABLE             TO HMS_APP;
+GRANT CREATE VIEW              TO HMS_APP;
+GRANT CREATE MATERIALIZED VIEW TO HMS_APP;
+GRANT CREATE SEQUENCE          TO HMS_APP;
+GRANT CREATE PROCEDURE         TO HMS_APP;
+GRANT CREATE TRIGGER           TO HMS_APP;
+GRANT CREATE TYPE              TO HMS_APP;
+GRANT CREATE SYNONYM           TO HMS_APP;
+GRANT CREATE JOB               TO HMS_APP;
+GRANT CREATE ROLE              TO HMS_APP;
+GRANT EXECUTE ON SYS.DBMS_CRYPTO TO HMS_APP;
+GRANT EXECUTE ON SYS.DBMS_LOCK   TO HMS_APP;
+
+PROMPT >>> [5] Role (thakle skip)
+BEGIN
+    FOR r IN (SELECT column_value AS RNAME FROM TABLE(SYS.ODCIVARCHAR2LIST('HMS_READONLY_ROLE','HMS_APP_USER_ROLE'))) LOOP
+        BEGIN
+            EXECUTE IMMEDIATE 'CREATE ROLE ' || r.RNAME;
+        EXCEPTION WHEN OTHERS THEN NULL;
+        END;
+    END LOOP;
+END;
+/
+
+PROMPT >>> [6] Data Pump directory
+CREATE OR REPLACE DIRECTORY HMS_DUMP_DIR AS 'C:\HMS_PROJECT\sync\dump';
+GRANT READ, WRITE ON DIRECTORY HMS_DUMP_DIR TO HMS_APP;
+GRANT DATAPUMP_EXP_FULL_DATABASE, DATAPUMP_IMP_FULL_DATABASE TO HMS_APP;
+
+PROMPT >>> Result
+SELECT USERNAME, ACCOUNT_STATUS, DEFAULT_TABLESPACE FROM DBA_USERS WHERE USERNAME = 'HMS_APP';
+EXIT
