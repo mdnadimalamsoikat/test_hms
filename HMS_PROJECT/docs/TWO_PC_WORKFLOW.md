@@ -77,14 +77,14 @@ Ja kore:
 3. SYS password chay -> `sync\full_reset_user.sql`: HMS_APP er session kill -> `DROP USER HMS_APP CASCADE` -> notun `CREATE USER` + grant + `HMS_DUMP_DIR`
 4. `impdp` (`sync\dump\hms_app.dmp`)
 5. `apex\f101.sql` import (thakle)
-6. `sync\post_import_check.sql`: recompile + INVALID list + 13 ta must-have object + row count
+6. `sync\post_import_check.sql`: recompile + INVALID list + 16 ta must-have object + row count
 
 ### Ek PC (Home) theke onno PC (Office) e replace korar niyom
 1. **Home PC (jekhane latest kaj):** App Builder theke app 101 export -> `C:\HMS_PROJECT\apex\f101.sql` (replace) -> `sync\END_OF_DAY.bat` (expdp + git push). Git na thakle `C:\HMS_PROJECT` folder pendrive e copy.
 2. **Office PC:** `git pull` (ba pendrive theke `sync\dump\hms_app.dmp` + `apex\f101.sql` copy). `sync\config.bat` e Office er `DB_SERVICE=localhost:1521/ORCL` + `DB_PASS` thik ache kina dekhun.
 3. Toad / SQL tab e HMS_APP **Disconnect**.
 4. `sync\FULL_RESTORE.bat` double-click -> `YES` -> SYS password.
-5. Shesh e "INVALID objects" = no rows, "13 ta must-have" sob `VALID`/`ENABLED` hote hobe.
+5. Shesh e "INVALID objects" = no rows, "16 ta must-have" sob `VALID`/`ENABLED` hote hobe.
 
 Manual korle (Toad e): `sync\full_reset_user.sql` SYS (HMS_SYS) connection e F5 (`&1` pop-up e HMS_APP password), tarpor CMD e:
 `impdp HMS_APP/<pass>@localhost:1521/ORCL SCHEMAS=HMS_APP DIRECTORY=HMS_DUMP_DIR DUMPFILE=hms_app.dmp LOGFILE=imp.log`

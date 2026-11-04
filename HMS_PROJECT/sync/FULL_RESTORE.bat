@@ -51,5 +51,5 @@ echo [5/5] Check ...
 sqlplus -S %DB% @sync\post_import_check.sql
 
 echo.
-echo ===== FULL RESTORE shesh. Upor er "INVALID objects" ar "13 ta must-have" check korun =====
+echo ===== FULL RESTORE shesh. Upor er "INVALID objects" ar "16 ta must-have" check korun =====
 pause

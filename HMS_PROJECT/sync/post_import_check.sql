@@ -7,12 +7,13 @@ EXEC DBMS_UTILITY.COMPILE_SCHEMA('HMS_APP', FALSE);
 PROMPT >>> INVALID objects  (kichu asle seta pathan; "no rows selected" = bhalo)
 SELECT object_type, object_name FROM user_objects WHERE status = 'INVALID';
 
-PROMPT >>> Must-have objects (13 ta, sob VALID / ENABLED hote hobe)
+PROMPT >>> Must-have objects (16 ta, sob VALID / ENABLED hote hobe)
 SELECT o.object_name, o.object_type, o.status
   FROM user_objects o
  WHERE o.object_name IN ('TRG_APPOINTMENT_BI','TRG_EMPLOYEE_CODE_BI','TRG_DOCTOR_CODE_BI',
                          'TRG_BILLING_SYNC_OPD_PAY','FN_OPD_FEE','FN_OPD_IS_FOLLOWUP',
                          'PR_SAVE_OPD_VITALS','PR_SAVE_OPD_CONSULTATION',
+                         'PR_ADD_OPD_RX_LINE','PR_REMOVE_OPD_RX_LINE','PR_COMPLETE_OPD_VISIT',
                          'VW_OPD_TOKEN_SLIP','VW_DOCTOR_QUEUE','VW_OPD_DASHBOARD',
                          'PKG_OPD','PKG_BILLING')
  ORDER BY o.object_type, o.object_name;
