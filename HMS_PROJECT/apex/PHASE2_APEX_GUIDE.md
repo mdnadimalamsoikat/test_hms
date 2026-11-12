@@ -58,7 +58,9 @@ Shared Components → User Interface Attributes:
 - Navigation Menu: Side, List **HMS Menu**
 - Navigation Bar: user name `&G_FULL_NAME.`, Change Password (page 2), Sign Out
 - CSS File URLs: `#APP_FILES#hms.css` · JS: `#APP_FILES#hms.js`
-- Static Application Files e upload: `apex/static/hms.css`, `apex/static/hms.js`, logo
+- Static Application Files e upload: `apex/static/hms.css` **ar** `apex/static/hms.min.css` (dutoi lagbe), `apex/static/hms.js`, logo
+  - CSS File URL: `#APP_FILES#hms#MIN#.css` (jodi file `static/` folder e thake: `#APP_FILES#static/hms#MIN#.css`) — **#MIN# mane:** normal run e `hms.min.css`, Debug on e `hms.css` load hoy. Tai CSS change korle **duita file-i replace** korben, nahole notun design ashbe na.
+  - `hms.min.css` = `hms.css` er comment/space bad deya version. Repo te duita-i ache; CSS edit korle min abar toiri korun (python/online minifier).
 
 ### 1.3 Globalization (Bangladesh)
 Edit Application Properties → Globalization:
@@ -197,7 +199,7 @@ BEGIN
   :P10_PATIENT_ID := PKG_PATIENT.register_patient(
       p_branch_id=>:G_BRANCH_ID, p_first_name=>:P10_FIRST_NAME, p_last_name=>:P10_LAST_NAME,
       p_gender=>:P10_GENDER, p_phone=>:P10_PHONE_PRIMARY,
-      p_dob=>TO_DATE(:P10_DATE_OF_BIRTH, 'DD-MON-YYYY'), p_age_years=>:P10_AGE_YEARS,
+      p_dob=>TO_DATE(:P10_DATE_OF_BIRTH, 'DD/MM/YYYY'), p_age_years=>:P10_AGE_YEARS,
       p_blood_group=>:P10_BLOOD_GROUP, p_father_name=>:P10_FATHER_NAME, p_nid=>:P10_NID_NUMBER,
       p_address=>:P10_PRESENT_ADDRESS, p_district=>:P10_PRESENT_DISTRICT,
       p_category=>NVL(:P10_PATIENT_CATEGORY,'GENERAL'), p_ref_doctor_id=>:P10_REFERRED_DOCTOR_ID,
@@ -219,7 +221,7 @@ BEGIN
 END;
 ```
 (Page Items to Submit er jonno hms.js already pageItems pathay.)
-DA: DOB change → Set Value (PL/SQL) `P10_AGE_YEARS := TRUNC(MONTHS_BETWEEN(SYSDATE,TO_DATE(:P10_DATE_OF_BIRTH,'DD-MON-YYYY'))/12)`.
+DA: DOB change → Set Value (PL/SQL) `P10_AGE_YEARS := TRUNC(MONTHS_BETWEEN(SYSDATE,TO_DATE(:P10_DATE_OF_BIRTH,'DD/MM/YYYY'))/12)` (item Format `DD/MM/YYYY`, Fire on Initialization OFF).
 
 ### Page 12 – Patient Profile 360°
 Item `P12_PATIENT_ID` hidden. Layout:
