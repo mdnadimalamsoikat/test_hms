@@ -22,7 +22,7 @@
 <a id="0"></a>
 ## 0. LOGIN FIX + DB helper (age eta)
 
-**Keno login hocche na:** Authentication Scheme e *Post-Authentication Procedure* = `PKG_APP_SESSION.POST_AUTH` deya, kintu oi package DB te banano hoyni (`11_apex_support/01_apex_support.sql` chalano hoyni). APEX login er pore oi procedure call kore → na pele error → login fail.
+**Keno login hocche na:** Authentication Scheme e *Post-Authentication Procedure* = `PKG_APP_SESSION.POST_AUTH` deya, kintu oi package DB te banano hoyni. Package-ta `01_apex_support.sql`-e ache. `00_LOGIN_FIX.sql` nijer moddhe `@@01_apex_support.sql` call kore—normal setup-e `01_apex_support.sql` alada kore chalate hoy na. APEX login-er pore oi procedure call kore; package na thakle login fail kore.
 
 HMS_APP diye **ei order e** chalan:
 ```sql
@@ -324,12 +324,12 @@ Header (hospital name/logo, doctor name + BMDC, date), patient line, **Rx** list
 ## 6. SPRINT 5 — Billing (70–73)
 
 ### Page 70 – Bill list / Create
-Faceted Search `VW_BILL_LIST WHERE BRANCH_ID=:G_BRANCH_ID` (facets BILL_TYPE, BILL_STATUS, BILL_DATE). DUE_AMOUNT > 0 red.
+Faceted Search `VW_BILL_LIST WHERE BRANCH_ID=:G_BRANCH_ID` (facets: `BILL_TYPE`, `BILL_STATUS`, text-bucket `BILL_PERIOD`, `DUE_ONLY`). `BILL_PERIOD` uses `1. Today` / `2. Last 7 days` / `3. Last 30 days` / `4. Older` instead of a date-range facet because the previous APEX date-range facet caused `ORA-01841`. Red due badge only when `DUE_AMOUNT > 0`. `VW_BILL_LIST` is maintained in `database/11_apex_support/03_apex_views.sql` (not run by `RUN_ALL.sql`).
 Create Misc Bill (Modal 701): patient + type → `:P701_BILL_ID := PKG_BILLING.create_bill(:G_BRANCH_ID,:P701_PATIENT_ID,:P701_BILL_TYPE);`
 
 ### Page 71 – Bill Detail + Payment (cashier screen)
 - Banner: Bill no, patient, status
-- **IG (read-only)** `HMS_BILLING_DTL WHERE BILL_ID=:P71_BILL_ID AND IS_ACTIVE='Y'`
+- **Classic Report (read-only)** `HMS_BILLING_DTL WHERE BILL_ID=:P71_BILL_ID AND IS_ACTIVE='Y'` (no Interactive Grid)
 - Add Item region: SERVICE_ID (VW_LOV_SERVICE), QTY, DISCOUNT → button *Add* → `PKG_BILLING.add_bill_item(:P71_BILL_ID,:P71_SERVICE_ID,NULL,:P71_QTY,NULL,:P71_DISC);`
 - Right **Summary card** (Gross, Discount, Net, Paid, **Due** big)
 - Discount (AUTH_BILLING_APPROVE): `PKG_BILLING.apply_discount(:P71_BILL_ID,:P71_HDR_DISC,:P71_DISC_REASON,:G_EMPLOYEE_ID);`

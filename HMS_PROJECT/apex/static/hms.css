@@ -19,8 +19,13 @@
 
 /* Status badge  <span class="hms-badge WAITING">WAITING</span> */
 .hms-badge { padding:2px 8px; border-radius:10px; font-size:.75rem; font-weight:600; color:#fff; background:#777; }
-.hms-badge.WAITING{background:var(--hms-warn)} .hms-badge.COMPLETED,.hms-badge.PAID{background:var(--hms-ok)}
-.hms-badge.CANCELLED,.hms-badge.DUE{background:var(--hms-danger)} .hms-badge.ADMITTED,.hms-badge.IN_CONSULTATION{background:var(--hms-primary)}
+.hms-badge.DRAFT{background:#78909c}
+.hms-badge.WAITING,.hms-badge.PARTIAL{background:var(--hms-warn)} .hms-badge.COMPLETED,.hms-badge.PAID{background:var(--hms-ok)}
+.hms-badge.CANCELLED,.hms-badge.DUE{background:var(--hms-danger)} .hms-badge.ADMITTED,.hms-badge.IN_CONSULTATION,.hms-badge.OPEN{background:var(--hms-primary)}
+.hms-badge.REFUNDED{background:#6a1b9a}
+
+/* Right-align bill amounts within Classic Report cells */
+.hms-money { display:block; text-align:right; white-space:nowrap; }
 
 /* Required field star lal */
 .t-Form-fieldContainer.is-required .t-Form-label::after { content:" *"; color:var(--hms-danger); }
