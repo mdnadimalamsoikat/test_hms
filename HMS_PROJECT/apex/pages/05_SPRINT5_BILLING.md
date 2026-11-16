@@ -114,23 +114,124 @@ IPD bill hole button `ADJUST_ADVANCE` → `PKG_BILLING.adjust_advance(:P71_BILL_
 
 ---
 ## PAGE 72 — Patient Account Statement
-Blank 72. Items: P72_PATIENT_ID (Popup, Required), P72_FROM (Date, default -30d), P72_TO (Date, default today), button GO.
-Classic Report (Page Items to Submit all 3):
-```sql
-SELECT dt, doc_no, particulars, debit, credit,
-       SUM(debit - credit) OVER (ORDER BY dt, doc_no ROWS UNBOUNDED PRECEDING) balance
-FROM (
-  SELECT BILL_DATE dt, BILL_NO doc_no, BILL_TYPE||' Bill' particulars, NET_AMOUNT debit, 0 credit
-    FROM HMS_BILLING WHERE PATIENT_ID=:P72_PATIENT_ID AND BILL_STATUS<>'CANCELLED'
-  UNION ALL
-  SELECT RECEIPT_DATE, RECEIPT_NO, RECEIPT_TYPE||' - '||PAYMENT_MODE,
-         CASE WHEN RECEIPT_TYPE='REFUND' THEN AMOUNT ELSE 0 END,
-         CASE WHEN RECEIPT_TYPE<>'REFUND' THEN AMOUNT ELSE 0 END
-    FROM HMS_PAYMENT_RECEIPT WHERE PATIENT_ID=:P72_PATIENT_ID AND RECEIPT_STATUS='VALID' AND RECEIPT_TYPE<>'ADJUSTMENT')
-WHERE dt BETWEEN TO_DATE(:P72_FROM,'DD-MON-YYYY') AND TO_DATE(:P72_TO,'DD-MON-YYYY') + 1
-ORDER BY dt, doc_no
+**Kaj:** Ekjon patient-er nirdishto tarikh-er bill charge, payment, refund, advance adjustment ebong running balance dekha. Bill amount `PKG_BILLING` theke ashe; ei report kono bill update kore na.
+
+Blank Page 72 `Patient Account Statement` korun. Page Security: Authorization Scheme `AUTH_BILLING`; Page Access Protection `Arguments Must Have Checksum`.
+
+Items:
+- `P72_PATIENT_ID` — Popup LOV; LOV query `SELECT D, R FROM VW_LOV_PATIENT WHERE BRANCH_ID=:G_BRANCH_ID ORDER BY D`. `VW_LOV_PATIENT` active patient dey; branch condition chara rakhben na.
+- `P72_FROM` — Date Picker, Format Mask `DD-MM-YYYY`.
+- `P72_TO` — Date Picker, Format Mask `DD-MM-YYYY`.
+
+APEX date field-e `12-11-2026` er moto value dekhale mask `DD-MM-YYYY`. Ei item duitar Format Mask, default process, validation ebong report query-te **ekoi `DD-MM-YYYY`** use korte hobe; `DD-MON-YYYY` dile ORA-01843 hobe.
+
+Before Header process `SET_DEFAULT_DATES` (PL/SQL Code):
 ```
-Sum debit/credit. PRINT button (window.print). Authorization AUTH_BILLING.
+BEGIN
+  IF :P72_FROM IS NULL THEN
+    :P72_FROM := TO_CHAR(TRUNC(SYSDATE) - 29, 'DD-MM-YYYY');
+  END IF;
+
+  IF :P72_TO IS NULL THEN
+    :P72_TO := TO_CHAR(TRUNC(SYSDATE), 'DD-MM-YYYY');
+  END IF;
+END;
+```
+`GO` button page submit korbe. Required validation `P72_PATIENT_ID`, `P72_FROM`, `P72_TO`-te din; date-range validation `GO` button-e chalaben:
+```
+BEGIN
+  RETURN TO_DATE(:P72_FROM, 'DD-MM-YYYY')
+      <= TO_DATE(:P72_TO, 'DD-MM-YYYY');
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN FALSE;
+END;
+```
+Error Message: `From date must be on or before To date.` · Associated Item: `P72_TO` · Display Location: `Inline with Field and in Notification` · Server-side Condition: When Button Pressed `GO`.
+
+Classic Report `Account Statement` (GO full page submit kore, tai `Page Items to Submit` lagbe na). Query:
+```
+WITH all_tx AS (
+  SELECT b.BILL_DATE AS dt,
+         b.BILL_NO AS doc_no,
+         b.BILL_TYPE || ' Bill' AS particulars,
+         NVL(b.PATIENT_PAYABLE, 0) AS debit,
+         0 AS credit,
+         1 AS sort_group,
+         b.BILL_ID AS sort_id
+    FROM HMS_BILLING b
+   WHERE b.PATIENT_ID = :P72_PATIENT_ID
+     AND b.BRANCH_ID = :G_BRANCH_ID
+     AND b.IS_ACTIVE = 'Y'
+     AND b.BILL_STATUS NOT IN ('DRAFT', 'CANCELLED')
+
+  UNION ALL
+
+  SELECT r.RECEIPT_DATE,
+         r.RECEIPT_NO,
+         r.RECEIPT_TYPE || ' - ' || NVL(r.PAYMENT_MODE, ''),
+         CASE WHEN r.RECEIPT_TYPE = 'REFUND' THEN r.AMOUNT ELSE 0 END,
+         CASE WHEN r.RECEIPT_TYPE = 'REFUND' THEN 0 ELSE r.AMOUNT END,
+         2,
+         r.RECEIPT_ID
+    FROM HMS_PAYMENT_RECEIPT r
+    JOIN HMS_BILLING b
+      ON b.BILL_ID = r.BILL_ID
+     AND b.PATIENT_ID = :P72_PATIENT_ID
+     AND b.BRANCH_ID = :G_BRANCH_ID
+     AND b.IS_ACTIVE = 'Y'
+     AND b.BILL_STATUS NOT IN ('DRAFT', 'CANCELLED')
+   WHERE r.PATIENT_ID = :P72_PATIENT_ID
+     AND r.BRANCH_ID = :G_BRANCH_ID
+     AND r.BILL_ID IS NOT NULL
+     AND r.RECEIPT_STATUS = 'VALID'
+     AND r.IS_ACTIVE = 'Y'
+),
+opening AS (
+  SELECT NVL(SUM(debit - credit), 0) AS opening_balance
+    FROM all_tx
+   WHERE dt < TO_DATE(:P72_FROM, 'DD-MM-YYYY')
+),
+period_tx AS (
+  SELECT dt, doc_no, particulars, debit, credit, sort_group, sort_id
+    FROM all_tx
+   WHERE dt >= TO_DATE(:P72_FROM, 'DD-MM-YYYY')
+     AND dt <  TO_DATE(:P72_TO, 'DD-MM-YYYY') + 1
+),
+statement_rows AS (
+  SELECT CAST(TO_DATE(:P72_FROM, 'DD-MM-YYYY') AS TIMESTAMP) AS dt,
+         'OPENING' AS doc_no,
+         'Opening Balance' AS particulars,
+         CASE WHEN opening_balance > 0 THEN opening_balance ELSE 0 END AS debit,
+         CASE WHEN opening_balance < 0 THEN ABS(opening_balance) ELSE 0 END AS credit,
+         0 AS sort_group,
+         0 AS sort_id
+    FROM opening
+
+  UNION ALL
+
+  SELECT dt, doc_no, particulars, debit, credit, sort_group, sort_id
+    FROM period_tx
+)
+SELECT dt,
+       doc_no,
+       particulars,
+       debit,
+       credit,
+       SUM(debit - credit) OVER (
+         ORDER BY dt, sort_group, sort_id
+         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS balance,
+       sort_group,
+       sort_id
+  FROM statement_rows
+ ORDER BY dt, sort_group, sort_id
+```
+`PATIENT_PAYABLE` use korchi, `NET_AMOUNT` noy—insurance thakle patient-er nijer baki taka-i dekhabey. `ADJUSTMENT` credit-e dhora hoy; `REFUND` debit-e dhora hoy. `SORT_GROUP` o `SORT_ID` report column duita hide korun; `BALANCE`-e running total dekhabe. Opening Balance tarikh range-er ager transaction theke ashe.
+
+Column heading: `DT` = `Date`; `DOC_NO` = `Document #`; `PARTICULARS` = `Details`; `DEBIT` = `Charge (Tk)`; `CREDIT` = `Received (Tk)`; `BALANCE` = `Balance (Tk)`. `DT` Format Mask `DD-MON-YYYY HH24:MI`; money column-gulor Format Mask `FM999G999G999G990D00`. `Compute Sum` On korben na. When No Data Found English message: `No account transactions were found for this patient and date range.`
+
+`PRINT_STATEMENT` button → Dynamic Action (Click, Button `PRINT_STATEMENT`) → True Action `Execute JavaScript Code` → `window.print();`. Application authorization `AUTH_BILLING`. Unadjusted patient advance ei bill statement-e thakbe na; advance bill-e adjust hole `ADJUSTMENT` receipt hisebe dekhabe.
 
 ---
 ## PAGE 73 — Invoice / Money Receipt Print
