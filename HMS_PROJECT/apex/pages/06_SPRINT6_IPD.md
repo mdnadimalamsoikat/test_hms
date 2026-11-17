@@ -163,7 +163,7 @@ SELECT D, R
  WHERE BRANCH_ID = :G_BRANCH_ID
  ORDER BY D
 ```
-  Set Display As `Modal Dialog`, Display Null Value `Yes`, Null Display Value `- Select patient (MRN - name - phone) -`, Manual Entry `No`, Fetch on Search `Yes`, Search Match Type `Contains`, and Minimum Characters `2`. (In APEX 24.2 the relevant property is Settings → Fetch on Search, not `Search as You Type`.) This branch-filtered LOV shows the MRN, patient name, and phone in the dialog. Security → Session State Protection `Checksum Required - Session Level` (the app-generated links can still prefill this item).
+  Set Display As `Modal Dialog`, Display Null Value `Yes`, Null Display Value `- Select patient (MRN - name - phone) -`, Manual Entry `No`, Fetch on Search `Yes`, Search Match Type `Contains`, and Minimum Characters `2`. (In APEX 24.2 the relevant property is Settings → Fetch on Search, not `Search as You Type`.) This branch-filtered LOV shows the MRN, patient name, and phone in the dialog. Security → Session State Protection `Unrestricted`: a Popup LOV saves its selection through Ajax and needs this item to accept that session-state update.
 
 - **P40_OPD_VISIT_ID** — Region `Patient & Visit`; Type `Hidden`; Label is not displayed; Validation → Value Required `No`; Security → Session State Protection `Checksum Required - Session Level`. This optional value is passed only by the app-generated OPD admission link. Do not give it a user-editable LOV.
 
@@ -175,7 +175,7 @@ SELECT D, R
    AND DEPT_TYPE = 'CLINICAL'
  ORDER BY D
 ```
-  Display Null Value `Yes`; Null Display Value `- Select department -`.
+  Display Null Value `Yes`; Null Display Value `- Select department -`; Security → Session State Protection `Unrestricted` (this is the parent value sent to the cascading Doctor LOV).
 
 - **P40_DOCTOR_ID** — Region `Admission Details`; Type `Select List`; Label `Admitting Doctor`; Validation → Value Required `Yes`; LOV Type `SQL Query`:
 ```
@@ -185,7 +185,7 @@ SELECT D, R
    AND DEPT_ID = :P40_DEPT_ID
  ORDER BY D
 ```
-  Display Null Value `Yes`; Null Display Value `- Select doctor -`; Cascading LOV Parent Item(s) `P40_DEPT_ID`. Do not set a static doctor default. If this admission came from OPD, choose the treating doctor shown on that visit.
+  Display Null Value `Yes`; Null Display Value `- Select doctor -`; Cascading LOV Parent Item(s) `P40_DEPT_ID`; Security → Session State Protection `Unrestricted` (it is an editable cascading LOV item). Do not set a static doctor default. If this admission came from OPD, choose the treating doctor shown on that visit.
 
 - **P40_ADMISSION_TYPE** — Region `Admission Details`; Type `Radio Group`; Label `Admission Type`; Validation → Value Required `Yes`; LOV Type `Static Values`; enter one entry per line:
 ```
@@ -225,7 +225,7 @@ SELECT v.WARD_NAME || ' - Bed ' || v.BED_NO || ' (' ||
        )
  ORDER BY v.WARD_NAME, v.BED_NO
 ```
-  Set Display As `Modal Dialog`, Display Null Value `Yes`, Null Display Value `- Select an available bed -`, Cascading LOV Parent Item(s) `P40_PATIENT_ID`, and Security → Session State Protection `Checksum Required - Session Level`. With no patient selected (for example, when Page 41 passes a bed), the LOV lists this branch's available beds. Once a patient is selected it refreshes to beds allowed for that patient's gender. If the previously selected bed is no longer eligible, select another one. The package locks and checks the bed again at submit time, so two users cannot admit into the same bed.
+  Set Display As `Modal Dialog`, Display Null Value `Yes`, Null Display Value `- Select an available bed -`, Cascading LOV Parent Item(s) `P40_PATIENT_ID`, and Security → Session State Protection `Unrestricted`. The Popup LOV and patient cascade update session state through Ajax. With no patient selected (for example, when Page 41 passes a bed), the LOV lists this branch's available beds. Once a patient is selected it refreshes to beds allowed for that patient's gender. If the previously selected bed is no longer eligible, select another one. The package locks and checks the bed again at submit time, so two users cannot admit into the same bed.
 
 - **P40_ADVANCE** — Region `Bed & Advance`; Type `Number Field`; Label `Advance (Tk)`; Validation → Value Required `No`; Default Type `Static`; Default `0`. In the Property Editor search for `Format Mask` and set `FM999G999G990D00`; the page validation below rejects negative values.
 
@@ -241,7 +241,9 @@ SELECT D, R
 - **P40_ADMISSION_ID** — Region `Patient & Visit`; Type `Hidden`; Validation → Value Required `No`; Security → Session State Protection `Restricted - May not be set from browser`; process output item. Do not display or let the user edit it.
 - **P40_ADMISSION_NO** — Region `Patient & Visit`; Type `Hidden`; Validation → Value Required `No`; Security → Session State Protection `Restricted - May not be set from browser`; process output item used in the success message. Do not display or let the user edit it.
 
-For items supplied by a link (Patient ID, Bed ID, or OPD Visit ID), use APEX's **Redirect to Page in this Application** target and set the target items there; do not hand-build a URL. Set Clear Cache to `40` on each link to remove values from an earlier admission. Page Access Protection must generate the checksum for those arguments.
+For items supplied by a link (Patient ID, Bed ID, or OPD Visit ID), use APEX's **Redirect to Page in this Application** target and set the target items there; do not hand-build a URL. Set Clear Cache to `40` on each link to remove values from an earlier admission. Keep Page Access Protection `Arguments Must Have Checksum`; this page-level checksum protects incoming link arguments even though the editable LOV items below use `Unrestricted` item protection.
+
+**ORA-20987 / `ajax_set_session_state` fix:** Popup LOV and cascading LOV values are written to APEX session state by Ajax. If `P40_PATIENT_ID`, `P40_DEPT_ID`, `P40_DOCTOR_ID`, or `P40_BED_ID` reports that no session checksum was passed, select that item → Property Editor → Security → Session State Protection → `Unrestricted`, then Save. Do not weaken the page's `Arguments Must Have Checksum` setting. Keep `P40_OPD_VISIT_ID` at `Checksum Required - Session Level` because only an APEX-generated link sets it; keep the two admission output items at `Restricted - May not be set from browser`. Branch, patient, doctor, and bed validations still enforce the allowed values on submit.
 
 ### 4. Add the Admit button
 In the Page Designer Gallery → **Buttons**, drag a button into the `Bed & Advance` region. Set Name `ADMIT`, Label `Admit Patient`, Position `Create` (the bottom-right region position), Action `Submit Page`, Button Template `Hot`, Icon `fa-bed`, and Behavior → Requires Confirmation `Yes` with message `Admit this patient to the selected bed and create an IPD bill?`. Set Show Processing `Yes` to discourage a second click. The button must execute validations; do not turn off Execute Validations.
