@@ -17,29 +17,103 @@ Flow: **Bed Map (41)** → **Admission (40)** → **Inpatients (42)** → **Char
 
 ---
 ## PAGE 41 — Bed Map ⭐
-Create Page ▸ **Cards** 41 `Bed Map` ▸ Source:
-```sql
-SELECT BED_ID, WARD_ID, WARD_NAME, WARD_TYPE, BED_NO, BED_TYPE, DAILY_CHARGE, BED_STATUS, STATUS_CSS,
-       ADMISSION_ID, ADMISSION_NO, MRN, PATIENT_NAME,
-       CASE BED_STATUS WHEN 'AVAILABLE' THEN 'fa-bed' WHEN 'OCCUPIED' THEN 'fa-user' ELSE 'fa-wrench' END ICO
-  FROM VW_BED_MAP WHERE BRANCH_ID = :G_BRANCH_ID
- ORDER BY WARD_NAME, BED_NO
-```
-Cards attributes:
-| Property | Value |
-|---|---|
-| Layout | **Float** (choto card pasha-pashi) |
-| Title | `&BED_NO.` |
-| Subtitle | `&WARD_NAME.` |
-| Body | `&PATIENT_NAME.` (Advanced: `<small>&MRN.</small>`) |
-| Icon | Icon Class ▸ ICO · Icon Position Top |
-| Badge | BED_STATUS |
-| Card CSS Classes | `&STATUS_CSS.` (u-success green / u-danger red / u-warning yellow) |
-| Action 1 (Full Card) | Link ▸ Page **40** set `P40_BED_ID=&BED_ID.` · Server-side condition ▸ ... Cards action condition not per row → use **Link URL column**: SQL e add `CASE WHEN BED_STATUS='AVAILABLE' THEN APEX_PAGE.GET_URL(p_page=>40,p_items=>'P40_BED_ID',p_values=>BED_ID) WHEN BED_STATUS='OCCUPIED' THEN APEX_PAGE.GET_URL(p_page=>43,p_items=>'P43_ADMISSION_ID',p_values=>ADMISSION_ID) END LINK_URL` → Action Type Full Card ▸ Link ▸ Type **URL** ▸ `&LINK_URL.` |
-Faceted? Page e **Region: Filters** (Faceted Search region, filtered region = cards) facets: WARD_NAME, WARD_TYPE, BED_STATUS.
-Top summary: Classic report from `VW_BED_OCCUPANCY` (template Badge List): `SELECT WARD_NAME label, AVAILABLE||'/'||TOTAL_BEDS value FROM VW_BED_OCCUPANCY WHERE BRANCH_ID=:G_BRANCH_ID`.
-Legend Static: 🟩 Free 🟥 Occupied 🟨 Reserved ⬜ Cleaning. Auto-refresh 60s. Authorization AUTH_IPD.
+**Purpose:** Read-only bed status board. It shows every active bed in the signed-in user's branch and makes Available beds easy to find. Bed admission/status changes happen on later pages, not on this page.
 
+### 1. Verify the views before opening Page Designer
+Toad → connect as `HMS_APP` → run this check:
+```
+SELECT OBJECT_NAME, STATUS
+  FROM USER_OBJECTS
+ WHERE OBJECT_NAME IN ('VW_BED_MAP', 'VW_BED_OCCUPANCY')
+ ORDER BY OBJECT_NAME;
+```
+Both should be `VALID`. `VW_BED_MAP` is created by `database/11_apex_support/03_apex_views.sql`; `VW_BED_OCCUPANCY` is in `database/07_views/create_all_views.sql` (also called by `RUN_ALL.sql`). If a view is missing/invalid, open the corresponding file in Toad as HMS_APP and press **F5 (Execute as Script)**. The bed-map view already excludes inactive beds/wards; the Cards query below filters by `:G_BRANCH_ID`.
+
+### 2. Create or update Page 41
+If Page 41 already exists, update it—do not create a duplicate. Otherwise App Builder → App 101 → **Create Page** → **Component** → **Cards**; Page Number `41`, Name `Bed Map`, Data Source `Local Database`, Source Type `SQL Query`. Use the app's database-driven navigation (do not create a duplicate navigation menu).
+
+Select Page 41 in Page Designer → Property Editor → **Security**:
+- Authorization Scheme: `AUTH_IPD`
+- Page Access Protection: `Arguments Must Have Checksum`
+
+Select the **Bed Map** Cards region → Source → SQL Query:
+```
+SELECT BED_ID,
+       WARD_ID,
+       WARD_NAME,
+       WARD_TYPE,
+       FLOOR_NO,
+       BED_NO,
+       BED_TYPE,
+       DAILY_CHARGE,
+       BED_STATUS,
+       STATUS_CSS,
+       ADMISSION_ID,
+       ADMISSION_NO,
+       ADMISSION_DATE,
+       MRN,
+       PATIENT_NAME,
+       CASE WHEN BED_STATUS = 'OCCUPIED'
+            THEN NVL(PATIENT_NAME, 'Patient details unavailable')
+            ELSE 'No patient assigned'
+       END AS CARD_BODY,
+       WARD_NAME || ' - ' || NVL(WARD_TYPE, 'Ward') ||
+         CASE WHEN FLOOR_NO IS NOT NULL THEN ' - Floor ' || FLOOR_NO END
+         AS CARD_SUBTITLE,
+       CASE WHEN ADMISSION_ID IS NOT NULL
+            THEN 'MRN ' || NVL(MRN, 'Not recorded') || ' - ' || ADMISSION_NO
+            ELSE 'Bed type ' || NVL(BED_TYPE, 'Not set') ||
+                 ' - Daily charge Tk ' ||
+                 TO_CHAR(NVL(DAILY_CHARGE, 0), 'FM999G999G990D00')
+       END AS CARD_META,
+       CASE BED_STATUS
+         WHEN 'AVAILABLE' THEN 'fa-bed'
+         WHEN 'OCCUPIED'  THEN 'fa-user'
+         WHEN 'RESERVED'  THEN 'fa-clock-o'
+         ELSE 'fa-wrench'
+       END AS ICON_CLASS
+  FROM VW_BED_MAP
+ WHERE BRANCH_ID = :G_BRANCH_ID
+ ORDER BY WARD_NAME, FLOOR_NO, BED_NO
+```
+This query only reads the existing view; it does not calculate a bill or update a bed. In the Cards region's **Attributes** tab, map the card fields to query columns: Title = `BED_NO`, Subtitle = `CARD_SUBTITLE`, Body = `CARD_BODY`, Secondary Body = `CARD_META`, Badge = `BED_STATUS`, Icon = `ICON_CLASS`, Card CSS Classes = `STATUS_CSS`. Set Layout to **Grid** (not Float), and Cards region → Appearance → CSS Classes = `hms-bed-map`. Keep the bed's status badge visible; the CSS class from the view supplies the status color.
+
+### 3. Put ward occupancy above the bed cards
+Create or keep a **Classic Report** named `Bed Occupancy by Ward`; no Interactive Grid. Its Source → SQL Query is:
+```
+SELECT WARD_NAME,
+       TOTAL_BEDS,
+       AVAILABLE,
+       OCCUPIED,
+       RESERVED,
+       NOT_READY,
+       OCCUPANCY_PCT
+  FROM VW_BED_OCCUPANCY
+ WHERE BRANCH_ID = :G_BRANCH_ID
+ ORDER BY WARD_NAME
+```
+Use headings `Ward`, `Total Beds`, `Available`, `Occupied`, `Reserved`, `Cleaning / Maintenance`, `Occupancy %`. Region → Appearance → CSS Classes = `hms-wide hms-bed-occupancy`; keep it full width. In Page Designer's Rendering tree, drag `Bed Occupancy by Ward` **above** `Bed Map` so the counts appear before the cards, not at the bottom of a long map.
+
+Add a Static Content region named `Bed Status Note` above the Cards region. Source:
+```
+<div class="hms-note hms-note--info">
+  <i class="fa fa-info-circle" aria-hidden="true"></i>
+  <div>
+    <span class="hms-note-title">Bed Status</span>
+    <span>Available beds are ready for admission. Occupied, reserved, cleaning, and maintenance beds are not available.</span>
+  </div>
+</div>
+```
+The note and all card text are English. Do not add an insert/update process or editable page item to Page 41.
+
+### 4. Test Page 41
+Run as an IPD user and verify:
+1. Only beds from the user's `G_BRANCH_ID` appear; no inactive bed/ward appears.
+2. Available / Occupied / Reserved / Cleaning or Maintenance badges match the counts in `Bed Occupancy by Ward`.
+3. Occupied cards show the patient name and MRN/admission number; unoccupied cards say `No patient assigned` and show the bed type/charge.
+4. The page is read-only. The current build order is `41 → 40 → 42 → 421 → 43 → 44 → 45 → 451`; add the Available → Page 40 and Occupied → Page 43 card links only after those target pages exist. Reserved/cleaning/maintenance beds must not open admission.
+
+If every card says `AVAILABLE`, check the occupancy report first. When `OCCUPIED = 0` for every ward, that is the database state—not a Cards styling error.
 ---
 ## PAGE 40 — Admission
 Blank 40 `Admission` ▸ Authorization AUTH_IPD_ADD.

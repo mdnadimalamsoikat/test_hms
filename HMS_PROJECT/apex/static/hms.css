@@ -229,3 +229,54 @@ a { color: #0b6e99; }
 .hms-wide table.t-Report-report td:first-child,
 .hms-wide table.t-Report-report th:first-child { width:44px; text-align:center; }
 .hms-wide .t-Region-headerItems--buttons .t-Button { margin-left:8px; }
+
+/* ---- Page 41: consistent responsive Bed Map cards ---- */
+.hms-bed-map .a-CardView-items {
+  display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px; align-items:stretch; margin:0; padding:0;
+}
+.hms-bed-map .a-CardView-item {
+  box-sizing:border-box; float:none !important; width:auto !important; max-width:none !important;
+  min-width:0; min-height:132px; margin:0 !important; overflow:hidden;
+  border:1px solid #e3ebf0 !important; border-left:4px solid #78909c !important;
+  border-radius:10px !important; background:#fff !important;
+  box-shadow:0 1px 4px rgba(16,42,67,.08) !important;
+}
+.hms-bed-map .a-CardView-title { margin-bottom:3px; font-size:1rem; line-height:1.25; }
+.hms-bed-map .a-CardView-subTitle { color:#607080; font-size:.82rem; line-height:1.3; }
+.hms-bed-map .a-CardView-body { margin-top:8px; color:#263746; font-size:.9rem; line-height:1.4; }
+.hms-bed-map .a-CardView-badge {
+  display:inline-block; padding:4px 9px; border:1px solid #dbe6ec;
+  border-radius:999px; background:#edf2f7 !important; color:#334e68 !important;
+  font-size:.72rem; font-weight:700; white-space:nowrap;
+}
+.hms-bed-map .a-CardView-item.u-success,
+.hms-bed-map .u-success .a-CardView-item { border-left-color:#2e7d32 !important; }
+.hms-bed-map .a-CardView-item.u-danger,
+.hms-bed-map .u-danger .a-CardView-item { border-left-color:#c62828 !important; }
+.hms-bed-map .a-CardView-item.u-warning,
+.hms-bed-map .u-warning .a-CardView-item { border-left-color:#ef6c00 !important; }
+.hms-bed-map .a-CardView-item.u-color-7,
+.hms-bed-map .u-color-7 .a-CardView-item { border-left-color:#78909c !important; }
+.hms-bed-map .a-CardView-item.u-success .a-CardView-badge,
+.hms-bed-map .u-success .a-CardView-badge,
+.hms-bed-map .a-CardView-badge.u-success { background:#e8f5e9 !important; border-color:#a5d6a7 !important; color:#1b5e20 !important; }
+.hms-bed-map .a-CardView-item.u-danger .a-CardView-badge,
+.hms-bed-map .u-danger .a-CardView-badge,
+.hms-bed-map .a-CardView-badge.u-danger { background:#fdecea !important; border-color:#f5c2be !important; color:#a51d1d !important; }
+.hms-bed-map .a-CardView-item.u-warning .a-CardView-badge,
+.hms-bed-map .u-warning .a-CardView-badge,
+.hms-bed-map .a-CardView-badge.u-warning { background:#fff3e0 !important; border-color:#ffd180 !important; color:#8a4b00 !important; }
+.hms-bed-map .a-CardView-item.u-color-7 .a-CardView-badge,
+.hms-bed-map .u-color-7 .a-CardView-badge,
+.hms-bed-map .a-CardView-badge.u-color-7 { background:#eef2f5 !important; border-color:#cbd5dc !important; color:#455a64 !important; }
+.hms-bed-occupancy { margin-bottom:14px; }
+@media screen and (max-width:1200px) {
+  .hms-bed-map .a-CardView-items { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media screen and (max-width:850px) {
+  .hms-bed-map .a-CardView-items { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media screen and (max-width:520px) {
+  .hms-bed-map .a-CardView-items { grid-template-columns:minmax(0,1fr); }
+}
