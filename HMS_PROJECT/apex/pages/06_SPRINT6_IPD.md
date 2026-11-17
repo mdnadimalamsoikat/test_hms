@@ -7,13 +7,13 @@
 - [ ] Sprint 5 (IPD bill, advance)
 - [ ] DB: `03_apex_views.sql` (VW_BED_MAP)
 
-**Build order:** 41 → 40 → 42 → 421 → 43 → 44 → 45 → 451 (bed na dekhe admission hoy na)
+**Build order:** 41 → 40 (build and non-submit checks) → 43 (minimum chart target) → 40 (one successful admission test + Page 41 bed/count verification) → 42 → 421 → 43 (remaining chart features) → 44 → 45 → 451. Do not start Page 42 until Page 40 passes.
 
 **Protiti page e:** Create → Regions → Items → Buttons → DA → Process/Validation → ✅ Test. ✅ pass na hole porer page e jaben na.
 
 > Guide er kono option screen e na pele → screenshot pathan, guide update kore dibo.
 
-Flow: **Bed Map (41)** → **Admission (40)** → **Inpatients (42)** → **Chart (43) / Medication (44)** → **Discharge (45 → 451)**
+Flow: **Bed Map (41)** → **Admission (40)** → **Patient Chart (43)**; **Inpatients (42)** is the list/entry point to **Chart (43)** and **Medication (44)** → **Discharge (45 → 451)**
 
 ---
 ## PAGE 41 — Bed Map ⭐
@@ -111,7 +111,7 @@ Run as an IPD user and verify:
 1. Only beds from the user's `G_BRANCH_ID` appear; no inactive bed/ward appears.
 2. Available / Occupied / Reserved / Cleaning or Maintenance badges match the counts in `Bed Occupancy by Ward`.
 3. Occupied cards show the patient name and MRN/admission number; unoccupied cards say `No patient assigned` and show the bed type/charge.
-4. The page is read-only. The current build order is `41 → 40 → 42 → 421 → 43 → 44 → 45 → 451`; add the Available → Page 40 and Occupied → Page 43 card links only after those target pages exist. Reserved/cleaning/maintenance beds must not open admission.
+4. The page is read-only. Add the Available → Page 40 and Occupied → Page 43 card links only after those target pages exist. Reserved/cleaning/maintenance beds must not open admission.
 
 If every card says `AVAILABLE`, check the occupancy report first. When `OCCUPIED = 0` for every ward, that is the database state—not a Cards styling error.
 ---
@@ -164,6 +164,8 @@ SELECT D, R
  ORDER BY D
 ```
   Set Display As `Modal Dialog`, Display Null Value `Yes`, Null Display Value `- Select patient (MRN - name - phone) -`, Manual Entry `No`, Fetch on Search `Yes`, Search Match Type `Contains`, and Minimum Characters `2`. (In APEX 24.2 the relevant property is Settings → Fetch on Search, not `Search as You Type`.) This branch-filtered LOV shows the MRN, patient name, and phone in the dialog. Security → Session State Protection `Unrestricted`: a Popup LOV saves its selection through Ajax and needs this item to accept that session-state update.
+
+- **P40_PATIENT_INFO** — Region `Patient & Visit`; Type `Display Only`; Label `Selected Patient`; Validation → Value Required `No`; Security → Session State Protection `Unrestricted`. This is a display-only summary returned by the Dynamic Action below; do not use it for validation, authorization, or admission processing.
 
 - **P40_OPD_VISIT_ID** — Region `Patient & Visit`; Type `Hidden`; Label is not displayed; Validation → Value Required `No`; Security → Session State Protection `Checksum Required - Session Level`. This optional value is passed only by the app-generated OPD admission link. Do not give it a user-editable LOV.
 
@@ -245,10 +247,30 @@ For items supplied by a link (Patient ID, Bed ID, or OPD Visit ID), use APEX's *
 
 **ORA-20987 / `ajax_set_session_state` fix:** Popup LOV and cascading LOV values are written to APEX session state by Ajax. If `P40_PATIENT_ID`, `P40_DEPT_ID`, `P40_DOCTOR_ID`, or `P40_BED_ID` reports that no session checksum was passed, select that item → Property Editor → Security → Session State Protection → `Unrestricted`, then Save. Do not weaken the page's `Arguments Must Have Checksum` setting. Keep `P40_OPD_VISIT_ID` at `Checksum Required - Session Level` because only an APEX-generated link sets it; keep the two admission output items at `Restricted - May not be set from browser`. Branch, patient, doctor, and bed validations still enforce the allowed values on submit.
 
-### 4. Add the Admit button
+### 4. Show the selected patient's details
+In Page Designer, open the **Dynamic Actions** tab on the left → right-click **Events** → **Create Dynamic Action**. Set the Dynamic Action properties: Identification → Name `Load selected patient details`; When → Event `Change`, Selection Type `Item(s)`, Item(s) `P40_PATIENT_ID`; Execution → Fire on Initialization `Yes`. Select the action under **True** (create one if needed) and set Identification → Action `Execute Server-side Code`. Set Settings → Items to Submit `P40_PATIENT_ID`, Items to Return `P40_PATIENT_INFO`, and paste this PL/SQL Code:
+```
+BEGIN
+  SELECT 'MRN: ' || p.MRN ||
+         ' | Name: ' || TRIM(p.FIRST_NAME || ' ' || NVL(p.LAST_NAME, '')) ||
+         ' | Gender: ' || p.GENDER ||
+         ' | Phone: ' || p.PHONE_PRIMARY
+    INTO :P40_PATIENT_INFO
+    FROM HMS_PATIENT p
+   WHERE p.PATIENT_ID = :P40_PATIENT_ID
+     AND p.BRANCH_ID = :G_BRANCH_ID
+     AND p.IS_ACTIVE = 'Y';
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    :P40_PATIENT_INFO := 'No active patient selected.';
+END;
+```
+This server-side lookup displays only a patient who is active in the signed-in branch. `P40_PATIENT_INFO` is informational only; all admission checks must continue to use the validated `P40_PATIENT_ID`.
+
+### 5. Add the Admit button
 In the Page Designer Gallery → **Buttons**, drag a button into the `Bed & Advance` region. Set Name `ADMIT`, Label `Admit Patient`, Position `Create` (the bottom-right region position), Action `Submit Page`, Button Template `Hot`, Icon `fa-bed`, and Behavior → Requires Confirmation `Yes` with message `Admit this patient to the selected bed and create an IPD bill?`. Set Show Processing `Yes` to discourage a second click. The button must execute validations; do not turn off Execute Validations.
 
-### 5. Add validations (all messages must remain English)
+### 6. Add validations (all messages must remain English)
 Open the **Processing** tab on the left → right-click **Validations** → **Create Validation**. For each validation set Identification → Name; Execution Options → Sequence and Always Execute `No`; Validation → Type and SQL Query; Error → Error Message, Display Location, and Associated Item; Server-side Condition → Type `When Button Pressed`, Button `ADMIT`. For `Rows Returned` / `No Rows Returned`, the Validation Type uses a SQL Query; APEX 24.2 does not show a separate Language property for these SQL validations, so do not search for one. Use `Inline with Field and in Notification` for item errors and `Inline in Notification` for the optional hidden OPD visit check. Language applies to the later Execute Code process, where it is `PL/SQL`. These checks only provide a helpful message; the package still performs the final locked bed check.
 
 1. Name `Patient belongs to this branch`; Sequence `10`; Type `Rows Returned`; SQL Query:
@@ -339,7 +361,7 @@ SELECT 1 FROM DUAL WHERE NVL(:P40_ADVANCE, 0) < 0
 
 For these nine required items (`P40_PATIENT_ID`, `P40_DEPT_ID`, `P40_DOCTOR_ID`, `P40_ADMISSION_TYPE`, `P40_REASON`, `P40_ATTENDANT_NAME`, `P40_ATTENDANT_PHONE`, `P40_BED_ID`, `P40_PAYMENT_MODE`), set Validation → Value Required `Yes`. APEX 24.2 uses the application text message `APEX.PAGE_ITEM_IS_REQUIRED` for its built-in required error; keep the application language/message English rather than looking for a per-item `Value Required Message` property. Optional `P40_OPD_VISIT_ID` and `P40_ADVANCE` remain Value Required `No`.
 
-### 6. Add the admission process and return branch
+### 7. Add the admission process and return branch
 On the **Processing** tab, right-click **Processes** → **Create Process**. Set Identification → Name `Admit Patient`, Type `Execute Code`; Source → Location `Local Database`, Language `PL/SQL`, and paste the code below; Execution → Point `Processing`, Sequence `10`; Server-side Condition → Type `When Button Pressed`, Button `ADMIT`. Leave Success Message → Success Message blank: the code sets a success message only after the package succeeds. Error messages from the two package race checks are added inline by the code; unexpected errors are re-raised to APEX.
 ```
 DECLARE
@@ -388,16 +410,17 @@ END;
 ```
 Do not add an Automatic Row Processing process or a second INSERT. `PKG_IPD.admit_patient` creates the admission and IPD bill, updates the linked OPD visit (when supplied), records a positive advance, and locks/re-checks the bed. The exception block turns the package's duplicate-patient and bed-race errors into clear English inline messages; unexpected errors are re-raised for APEX's normal error handling.
 
-Create a Branch named `Return to Bed Map`; Point `After Processing`; Type `Page or URL (Redirect)`; Target Page `41`; Clear Cache `41`; Server-side Condition → Type `When Button Pressed`, Button `ADMIT`. Page 42 is built next; after it exists and is tested, the successful admission branch can be changed to the agreed inpatient destination. Page 41 is the safe test destination now because it shows that the bed changed to Occupied.
+Create the final success Branch named `Open Patient Chart`; Point `After Processing`; Type `Page or URL (Redirect)`; Target Page `43`; Clear Cache `43`; Set Items → Name `P43_ADMISSION_ID`, Value `&P40_ADMISSION_ID.`; Server-side Condition → Type `When Button Pressed`, Button `ADMIT`. Use the APEX page target builder, not a hand-built URL, so APEX includes the required checksum. Page 43 must exist and keep Page Access Protection `Arguments Must Have Checksum`; `P43_ADMISSION_ID` must accept this APEX-generated, session-checked argument. If Page 43 is not yet ready, do not submit an admission just to test the redirect—first perform the non-submit item/LOV checks, then finish the Page 43 target before the single successful test. After success, open Page 41 separately to verify its read-only bed map and occupancy counts. Do not proceed to Page 42 until the Page 40 admission and these status checks pass.
 
-### 7. Test Page 40 before moving on
-This is a real database write even on a test run: admission creates an IPD bill and changes the selected bed to Occupied. Use a test patient and a test/development database; set Advance to `0` unless deliberately testing an advance receipt.
+### 8. Test Page 40 before moving on
+A successful admission is a real database write: it creates an IPD bill and changes the selected bed to `OCCUPIED`. Use a test patient and a test/development database; keep Advance at `0` for the first test. If Admit was clicked earlier, check the patient's admission and the bed status in Toad before submitting again.
 
-1. Page Designer → Page 40 → **Save**, then click **Run**. This is a normal page, so it can be run directly; it is not a modal dialog.
-2. Open the Patient LOV and select a test patient. Choose a clinical department and its active doctor, then choose an available bed suitable for that patient's gender. Fill Admission Type, Reason, Attendant Name/Phone; keep Advance `0` and Payment Mode `Cash` for the first test.
-3. Click **Admit Patient** and confirm. The page should return to Page 41 with an English success message. The selected bed should now show `OCCUPIED`; ward counts should increase by one occupied bed and decrease by one available bed.
-4. Before submitting, also test that a missing required field shows its English inline error; a bed that is no longer Available is rejected; a patient with an existing `ADMITTED` or `DISCHARGE_INITIATED` admission is rejected; and a linked OPD visit from another patient/branch is rejected. No failed validation may create an admission or bill.
-5. If the test fails, keep the exact APEX error text and screenshot. Do not click Admit again until checking the patient's admission and the bed status in Toad.
+1. Page Designer → Page 40 → **Save**, then click **Run**. Page 40 is a normal page, not a modal dialog.
+2. First do a **non-submit check**: open the Patient LOV and select a test patient. Confirm the ORA-20987 error is gone and `P40_PATIENT_INFO` shows that patient's MRN, name, gender, and phone. Choose a clinical department and confirm the doctor list refreshes; select a doctor, then open the bed LOV and confirm it lists available beds suitable for the selected patient's gender. Do not click **Admit Patient** during this check.
+3. Before the one successful submit, confirm in Toad that the test patient has no `ADMITTED` or `DISCHARGE_INITIATED` admission and the chosen bed is still `AVAILABLE`. Complete the required fields; keep Advance `0` and Payment Mode `Cash`.
+4. Click **Admit Patient** once and confirm. Page 43 must open with `P43_ADMISSION_ID` equal to the new `P40_ADMISSION_ID`; the English success message and chart must identify the same admission. Then open Page 41 separately: its read-only map must show the selected bed as `OCCUPIED`, and the ward report must show Occupied +1 and Available -1.
+5. Test invalid cases separately without reusing the successful patient/bed: missing required field, an unavailable bed, an existing active admission (`ADMITTED` or `DISCHARGE_INITIATED`), and an OPD visit from a different patient/branch must show English errors and create no additional admission or bill. The package also performs the final duplicate-patient and locked-bed checks.
+6. If any submit returns an error or the destination/status is unexpected, save the exact APEX message and screenshot. Do not click Admit again until checking the patient's admission and bed status in Toad.
 
 ---
 ## PAGE 42 — Current Inpatients
@@ -421,8 +444,8 @@ Process `PKG_IPD.transfer_bed(:P421_ADMISSION_ID, :P421_BED_ID, :P421_REASON, :G
 
 ---
 ## PAGE 43 — IPD Patient Chart
-Blank 43 ▸ Hidden P43_ADMISSION_ID (checksum), P43_PATIENT_ID (load).
-**Banner** (Value Attribute Pairs row): `SELECT ADMISSION_NO, PATIENT_NAME, MRN, WARD_NAME||' / '||BED_NO bed, DOCTOR_NAME, STAY_DAYS||' days' stay, DUE_AMOUNT FROM VW_IPD_CURRENT_PATIENTS WHERE ADMISSION_ID=:P43_ADMISSION_ID`
+Create or update Blank Page 43. Page Security → Authorization Scheme `AUTH_IPD`; Page Access Protection `Arguments Must Have Checksum`. Add Hidden `P43_ADMISSION_ID`, Value Required `Yes`, Security → Session State Protection `Checksum Required - Session Level`; Page 40's APEX-generated branch sets it from `&P40_ADMISSION_ID.`. Do not hand-build the URL or weaken Page Access Protection. Load `P43_PATIENT_ID` from the validated admission if needed; do not trust a browser-supplied patient ID.
+**Banner** (Value Attribute Pairs row): `SELECT ADMISSION_NO, PATIENT_NAME, MRN, WARD_NAME||' / '||BED_NO bed, DOCTOR_NAME, STAY_DAYS||' days' stay, DUE_AMOUNT FROM VW_IPD_CURRENT_PATIENTS WHERE ADMISSION_ID=:P43_ADMISSION_ID AND BRANCH_ID=:G_BRANCH_ID`
 Buttons in banner: Medication (44), Lab Order (50 with admission), Bill (71), Transfer (421), Discharge (45).
 **Tabs Container**:
 | Tab | Region |
