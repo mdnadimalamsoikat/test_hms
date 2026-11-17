@@ -57,9 +57,9 @@ SELECT BILL_NO, BILL_TYPE, BILL_DATE, PATIENT_ID, MRN, PATIENT_NAME, GROSS_AMOUN
 ### Layout
 | Region | Span | Content |
 |---|---|---|
-| Banner | 12 | `Bill &P71_BILL_NO. · &P71_BILL_TYPE. · &P71_PNAME. (&P71_MRN.)` + status badge — template Hero ba Standard + hms-banner |
-| Items | 8 | Classic Report (niche) |
-| Summary | 4 | Static, CSS `hms-kpi blue`? — ba **Value Attribute Pairs** report |
+| Banner | 12 | Existing bill/patient/date fields + status badge; Standard region, CSS Classes `hms-bill-banner` |
+| Summary | 12 | Static Content with five KPI cards; region CSS Classes `hms-bill-summary` |
+| Items | 12 | Classic Report (full-width, readable amounts) |
 | Add Item | 8 | Form items |
 | Payment | 4 | Payment items |
 | Receipts | 12 | Payment history |
@@ -71,16 +71,17 @@ SELECT BILL_DTL_ID, SERVICE_DATE, ITEM_DESC, REF_TYPE, QUANTITY, UNIT_PRICE, DIS
 ```
 Sum on NET_AMOUNT. Delete icon column (Authorization AUTH_SUPER): link `javascript:` → DA confirm → server `UPDATE HMS_BILLING_DTL SET IS_ACTIVE='N' WHERE BILL_DTL_ID=:P71_DEL_ID; PKG_BILLING.recalc_bill(:P71_BILL_ID);` → refresh.
 
-**Summary** region — Static Content, Text:
-```html
-<table class="hms-sum">
-<tr><td>Gross</td><td>&P71_GROSS.</td></tr>
-<tr><td>Discount</td><td>- &P71_DISC.</td></tr>
-<tr><td><b>Net</b></td><td><b>&P71_NET.</b></td></tr>
-<tr><td>Paid</td><td>&P71_PAID.</td></tr>
-<tr class="due"><td>DUE</td><td>&P71_DUE.</td></tr></table>
+**Summary** region — Static Content, full-width. Page Designer → Rendering tree → click `Summary` region → Property Editor → Appearance → **CSS Classes** = `hms-bill-summary` (class name only; no leading dot). Keep the database-loaded `P71_GROSS`, `P71_DISC`, `P71_NET`, `P71_PAID`, `P71_DUE` values; this is display-only and must not calculate or update bill amounts. Replace the old summary table with:
 ```
-Page inline CSS: `.hms-sum{width:100%;font-size:1.1rem}.hms-sum td:last-child{text-align:right}.hms-sum .due td{font-size:1.6rem;color:#c62828;font-weight:700;border-top:2px solid #333}`
+<div class="hms-kpi-row">
+  <div class="hms-kpi blue"><span class="hms-kpi-lbl">Gross</span><span class="hms-kpi-val">Tk&nbsp;&P71_GROSS.</span></div>
+  <div class="hms-kpi orange"><span class="hms-kpi-lbl">Discount</span><span class="hms-kpi-val">Tk&nbsp;&P71_DISC.</span></div>
+  <div class="hms-kpi purple"><span class="hms-kpi-lbl">Net</span><span class="hms-kpi-val">Tk&nbsp;&P71_NET.</span></div>
+  <div class="hms-kpi green"><span class="hms-kpi-lbl">Paid</span><span class="hms-kpi-val">Tk&nbsp;&P71_PAID.</span></div>
+  <div class="hms-kpi red"><span class="hms-kpi-lbl">Due</span><span class="hms-kpi-val">Tk&nbsp;&P71_DUE.</span></div>
+</div>
+```
+The currency and existing formatted amount stay together on one line (`&nbsp;`); do not insert `<br>` between them. The shared CSS turns the old large solid blocks into five compact, label-aligned cards and collapses to three/two columns on narrow screens. Banner region → Appearance → CSS Classes = `hms-bill-banner`; its final status badge is styled as a single badge instead of a nested chip.
 
 **Add Item** (Condition `:P71_STATUS IN ('OPEN','PARTIAL')`, Authorization AUTH_BILLING_ADD):
 P71_SERVICE_ID (Popup VW_LOV_SERVICE, Span 6) · P71_QTY (Number default 1, Span 2) · P71_ITEM_DISC (Number default 0, Span 2) · Button ADD_ITEM (Span 2, fa-plus)
@@ -235,19 +236,43 @@ Column heading: `DT` = `Date`; `DOC_NO` = `Document #`; `PARTICULARS` = `Details
 
 ---
 ## PAGE 73 — Invoice / Money Receipt Print
-Blank 73 ▸ Page Template **Minimal (No Navigation)**. Items P73_BILL_ID, P73_RECEIPT_ID (checksum).
-**Dynamic Content** region (PL/SQL Function Body returning a CLOB — Page 23 er moto `w()` + `RETURN l_html`) (same technique as page 23):
-- Header: branch name/address/phone (HMS_BRANCH)
-- Title: `INVOICE` (ba `MONEY RECEIPT` jodi P73_RECEIPT_ID)
-- Bill no, date, patient, MRN, bill type, (OPD hole Token No bold — `SELECT TOKEN_NO FROM HMS_OPD_VISIT WHERE VISIT_ID = bill.OPD_VISIT_ID`)
-- Table: SL · Description · Qty · Rate · Disc · Amount (HMS_BILLING_DTL)
-- Totals: Gross, Discount, Net, Paid, Due
-- In words: `INITCAP(TO_CHAR(TO_DATE(TRUNC(amt),'J'),'JSP')) || ' Taka Only'`
-- Receipt block (if receipt): receipt no, mode, TXN, amount
-- Footer: cashier `&G_FULL_NAME.`, print time
-CSS: `@page{size:A5;margin:8mm}` · font 12px · table border-collapse.
-Buttons PRINT (window.print, Hot) · BACK (`javascript:history.back()`).
-Auto print: DA Page Load → `window.print();` (optional).
+Blank Page 73 `Invoice / Money Receipt` ▸ Page Template **Minimal (No Navigation)** ▸ Security → Authorization Scheme `AUTH_BILLING` ▸ Page Access Protection `Arguments Must Have Checksum`.
+
+### 1. Fix the visible `New` / `341` boxes from the screenshot
+Page Designer → Rendering tree search box-e `P73_BILL_ID` likhe item select korun → Property Editor → **Identification** → **Type = Hidden**. Abar `P73_RECEIPT_ID` search/select kore same Type `Hidden` korun. Prottek item-er **Security → Value Protected = On** rakhun. `P73_BILL_ID` invoice/reprint-er bill ID; `P73_RECEIPT_ID` optional receipt ID—duita item thakbe, kintu page-e form field hisebe render hobe na.
+
+Page runtime-e jodi `New` / number-er dashed field ekhono thake, Page Designer Rendering tree-te visible field-er upor click kore tar **actual item name** ber korun. Screenshot-er control `P73_BILL_ID` ba `P73_RECEIPT_ID` na hole oi control-i identify kore hide/remove korun; item name dekha chara andaj kore hidden ache dhore neben na. Invoice content region ba patient/bill details hide korben na.
+
+### 2. Existing invoice content region-er CSS class
+Invoice-er current **Dynamic Content** region select korun (notun duplicate invoice region banaben na) → Property Editor → **Appearance → CSS Classes** = `hms-invoice`. CSS class-er age `.` diben na.
+- Bill items alada Classic Report region hole, oi report region-er CSS Classes = `hms-invoice-items`. Bill-item HTML table Dynamic Content region-er bhitore thakle alada class lagbe; `hms-invoice`-er nested table style avabei pabe.
+- KPI/summary card-gulo alada region-e thakle oi region-er CSS Classes = `hms-invoice-summary`; same Dynamic Content region-er moddhe thakle existing `.hms-kpi-row`/`.hms-kpi` markup rakhun.
+- `Document Actions` (Print/Back) region select korun → Appearance → CSS Classes = `hms-invoice-actions`. Print CSS-e puro actions region lukabe, tai printed invoice-e region title ba khali card thakbe na.
+
+### 3. Invoice-er data o readable markup
+Existing Dynamic Content region-er PL/SQL Function Body returning a CLOB (Page 23-r `w()` + `RETURN l_html` pattern) rakhun. Eta **display-only**: `HMS_BILLING`, `HMS_BILLING_DTL`, receipt/branch/patient/OPD visit theke current value porbe; bill, payment ba total calculate/update korbe na.
+- Header: `HMS_BRANCH` theke branch name, address, phone.
+- Title: receipt ID thakle `MONEY RECEIPT`, na thakle `INVOICE`.
+- Bill no/date, patient, MRN, bill type; OPD hole bold Token No (`HMS_OPD_VISIT.TOKEN_NO` via bill-er `OPD_VISIT_ID`).
+- Line items: `#`, `Description`, `Qty`, `Rate (Tk)`, `Discount (Tk)`, `VAT (Tk)`, `Net (Tk)`; headings Title Case-e rakhun. APEX Classic Report use korle Page Items to Submit `P73_BILL_ID` din ebong query-te existing `HMS_BILLING_DTL` values-i select korun.
+- Gross, Discount, Net, Paid, Due—bill record-er existing values. Receipt thakle receipt no, mode, transaction reference, amount receipt row theke show korun.
+- Amount-in-words existing formatter diye asbe; cashier `&G_FULL_NAME.` ebong print time footer-e rakhun.
+
+Raw database text CLOB HTML-e jorle `APEX_ESCAPE.HTML` diye escape korun; HTML attribute-e value dile `APEX_ESCAPE.HTML_ATTRIBUTE` use korun. Amount-er display string-o existing number/format value theke nin. Prottek total-er markup-e currency o existing formatted amount **ekoi `.hms-kpi-val` element-e** rakhun—example shape `<span class="hms-kpi-val">Tk&nbsp;1,000.00</span>`; real page-e `1,000.00`-er jaygay current database-derived formatted value bosbe. `Tk`-r pore `<br>` ba alada block diben na. Eta wrapping fix kore; kono amount math kore na.
+
+### 4. Print, Back, CSS, and test
+Page 73 page node select kore Property Editor-er search-e `Inline` khujun → **CSS → Inline**-e ei page-specific print paper rule din (shared `hms.css`-e diben na; onnanno page-er print size change hobe na):
+```
+@page { size: A5 landscape; margin: 8mm; }
+@media print {
+  .t-Body-title, #apexDevToolbar, .a-DevToolbar { display: none !important; }
+}
+```
+Ei page-specific rule APEX page title/developer toolbar sudhu Page 73-r print-e hide korbe; shared CSS-er maddhome onno page-er print title change hobe na. Shared `hms.css` + `hms.min.css`-e Page 71/73-r card, invoice table, print-only CSS ache. `Shared Components → Static Application Files`-e repo-r **dui file-i** replace korun. CSS URL `#APP_FILES#static/hms#MIN#.css` hole same path rakhun; update-er por Page 71/73 run kore **Ctrl+F5** din.
+
+- PRINT button: existing button-e Click Dynamic Action → True Action **Execute JavaScript Code** → `window.print();`. Page Load-e auto-print DA rakhben na—cashier age invoice verify kore tarpor print button chapbe.
+- BACK button: `javascript:history.back()` noy. APEX Link Builder → Page in this Application `71` → Set Items `P71_BILL_ID` = `&P73_BILL_ID.` → Clear Cache `71`. Link Builder-ke URL/checksum generate korte din.
+- Print preview test: Page 71 theke Page 73 khulun; screen-e `New`/`341` control na thaka, 5 total card-e `Tk 1,000.00` eki line-e thaka, ebong item table-e Description/Qty/Rate/Discount/VAT/Net alada pora jacche kina dekhen. PRINT chaple preview-te shudhu invoice/receipt thakbe—Page title, Document Actions, Back/Print button, navigation/footer/Developer Toolbar na thaka verify korun. Bill/receipt data unchanged thaka confirm korun; invoice/receipt amount kono page process-e update hobe na.
 
 ## Sprint 5 checklist
 - [ ] OPD visit (Sprint 4) → bill page 71 e dekhay

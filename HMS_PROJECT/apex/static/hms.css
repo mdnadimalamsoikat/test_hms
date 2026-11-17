@@ -56,3 +56,165 @@ body, .t-Body, .t-Body-main, .t-Body-content { background-color: #f4f7f9 !import
 .t-TreeNav .a-TreeView-content.is-current .fa { color: #0b6e99 !important; }
 /* Links */
 a { color: #0b6e99; }
+
+/* ---- v16: Page 71 bill header + five readable KPI cards ---- */
+.hms-bill-banner .hms-banner {
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px !important; padding:0;
+  background:transparent; border:0; border-radius:0;
+}
+.hms-bill-banner .hms-banner > span {
+  display:inline-flex; gap:6px; align-items:center; padding:5px 10px; color:#2b3a42; font-size:.84rem;
+  background:#fff; border:1px solid #dbe6ec; border-radius:999px; box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.hms-bill-banner .hms-banner > span:last-child {
+  gap:7px; padding:0; background:transparent; border:0; border-radius:0; box-shadow:none;
+}
+.hms-bill-banner .hms-banner > span:last-child .hms-badge {
+  display:inline-block; padding:4px 10px; border-radius:999px; color:#fff; font-weight:700; white-space:nowrap;
+}
+
+/* Page 71 and 73 share the same five-card money summary */
+.hms-bill-summary .hms-kpi-row,
+.hms-invoice .hms-kpi-row,
+.hms-invoice-summary .hms-kpi-row {
+  display:grid !important; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px;
+  width:100%; max-width:none; margin:0; padding:0; background:transparent; border:0; box-shadow:none;
+}
+.hms-bill-summary .hms-kpi,
+.hms-invoice .hms-kpi,
+.hms-invoice-summary .hms-kpi {
+  display:flex !important; flex-direction:column; justify-content:space-between; align-items:flex-start; gap:8px;
+  min-width:0; min-height:78px; padding:11px 13px; color:#263746 !important; background:#fff !important;
+  border:1px solid #e3ebf0; border-left-width:4px; border-radius:8px !important;
+  box-shadow:0 1px 4px rgba(16,42,67,.08) !important;
+}
+.hms-bill-summary .hms-kpi.blue, .hms-invoice .hms-kpi.blue, .hms-invoice-summary .hms-kpi.blue { border-left-color:#0b6e99; }
+.hms-bill-summary .hms-kpi.orange, .hms-invoice .hms-kpi.orange, .hms-invoice-summary .hms-kpi.orange { border-left-color:#ef6c00; }
+.hms-bill-summary .hms-kpi.purple, .hms-invoice .hms-kpi.purple, .hms-invoice-summary .hms-kpi.purple { border-left-color:#6a1b9a; }
+.hms-bill-summary .hms-kpi.green, .hms-invoice .hms-kpi.green, .hms-invoice-summary .hms-kpi.green { border-left-color:#2e7d32; }
+.hms-bill-summary .hms-kpi.red, .hms-invoice .hms-kpi.red, .hms-invoice-summary .hms-kpi.red {
+  background:#fff5f5 !important; border-color:#f5c2be; border-left-color:#c62828 !important;
+}
+.hms-bill-summary .hms-kpi .hms-kpi-lbl,
+.hms-invoice .hms-kpi .hms-kpi-lbl,
+.hms-invoice-summary .hms-kpi .hms-kpi-lbl {
+  font-size:.72rem; line-height:1.2; letter-spacing:.05em; opacity:1; text-transform:uppercase; color:#607080;
+}
+.hms-bill-summary .hms-kpi .hms-kpi-val,
+.hms-invoice .hms-kpi .hms-kpi-val,
+.hms-invoice-summary .hms-kpi .hms-kpi-val {
+  display:block; max-width:100%; font-size:1.05rem; line-height:1.2; font-weight:700;
+  color:#263746; white-space:nowrap !important; font-variant-numeric:tabular-nums; text-align:left;
+}
+.hms-bill-summary .hms-kpi .hms-kpi-val br,
+.hms-invoice .hms-kpi .hms-kpi-val br,
+.hms-invoice-summary .hms-kpi .hms-kpi-val br { display:none !important; }
+.hms-bill-summary .hms-kpi.red .hms-kpi-lbl,
+.hms-bill-summary .hms-kpi.red .hms-kpi-val,
+.hms-invoice .hms-kpi.red .hms-kpi-lbl,
+.hms-invoice .hms-kpi.red .hms-kpi-val,
+.hms-invoice-summary .hms-kpi.red .hms-kpi-lbl,
+.hms-invoice-summary .hms-kpi.red .hms-kpi-val { color:#a51d1d; font-weight:700; }
+
+/* ---- v17: Page 73 invoice / receipt document and item table ---- */
+.hms-invoice.t-Region {
+  background:#fff !important; border:1px solid #dbe6ec !important;
+  border-radius:10px !important; box-shadow:0 2px 8px rgba(16,42,67,.07) !important;
+  overflow:visible;
+}
+.hms-invoice .t-Region-body { padding:18px 20px !important; background:#fff !important; }
+.hms-invoice .hms-hero {
+  max-width:190mm; margin:0 auto; padding:8mm; background:#fff; color:#263746;
+  border:1px solid #dbe6ec; border-radius:8px; box-shadow:none;
+}
+.hms-invoice h1 {
+  margin:0 0 12px; color:#17384a; font-size:1.45rem; text-align:center; letter-spacing:.05em;
+}
+.hms-invoice .hms-banner {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px;
+  margin:8px 0 !important; padding:8px 0; background:transparent; border:0;
+  border-top:1px solid #dbe6ec; border-bottom:1px solid #dbe6ec; border-radius:0;
+}
+.hms-invoice .hms-banner > span {
+  display:inline-flex; gap:6px; align-items:center; padding:2px 0; color:#263746; font-size:.82rem; white-space:nowrap;
+  background:transparent; border:0; border-radius:0; box-shadow:none;
+}
+.hms-invoice p { margin:5px 0; line-height:1.45; }
+.hms-invoice-items { overflow-x:auto; }
+.hms-invoice-items .t-Report-pagination { display:none; }
+.hms-invoice table,
+.hms-invoice-items table.t-Report-report {
+  width:100% !important; margin:12px 0 10px; border-collapse:collapse; table-layout:auto;
+}
+.hms-invoice table th,
+.hms-invoice-items table.t-Report-report th {
+  padding:8px 6px; color:#334e68; background:#f1f6f9; border:0;
+  border-bottom:1px solid #9fb3c8; font-size:.76rem !important; letter-spacing:0;
+  text-transform:none !important; white-space:nowrap;
+}
+.hms-invoice table td,
+.hms-invoice-items table.t-Report-report td {
+  padding:8px 6px; color:#263746; border:0; border-bottom:1px solid #e3ebf0; vertical-align:top;
+}
+.hms-invoice table th:nth-child(n+3),
+.hms-invoice table td:nth-child(n+3),
+.hms-invoice-items table.t-Report-report th:nth-child(n+3),
+.hms-invoice-items table.t-Report-report td:nth-child(n+3) { text-align:right; white-space:nowrap; }
+.hms-invoice table th:first-child,
+.hms-invoice table td:first-child,
+.hms-invoice-items table.t-Report-report th:first-child,
+.hms-invoice-items table.t-Report-report td:first-child { width:34px; text-align:center; }
+.hms-invoice table td:nth-child(2),
+.hms-invoice-items table.t-Report-report td:nth-child(2) { width:38%; text-align:left; white-space:normal; }
+.hms-invoice .hms-note--ok { background:#f4f8fa; border-color:#dbe6ec; border-left-color:#0b6e99; color:#263746; }
+.hms-invoice .hms-note--ok .fa { color:#0b6e99; }
+
+@media screen and (max-width:760px) {
+  .hms-bill-summary .hms-kpi-row,
+  .hms-invoice .hms-kpi-row,
+  .hms-invoice-summary .hms-kpi-row { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media screen and (max-width:480px) {
+  .hms-bill-summary .hms-kpi-row,
+  .hms-invoice .hms-kpi-row,
+  .hms-invoice-summary .hms-kpi-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hms-bill-summary .hms-kpi,
+  .hms-invoice .hms-kpi,
+  .hms-invoice-summary .hms-kpi { padding:10px; }
+  .hms-bill-summary .hms-kpi .hms-kpi-val,
+  .hms-invoice .hms-kpi .hms-kpi-val,
+  .hms-invoice-summary .hms-kpi .hms-kpi-val { font-size:.98rem; }
+}
+
+@media print {
+  .hms-invoice-actions { display:none !important; }
+  html, body, .t-Body, .t-Body-main, .t-Body-content { background:#fff !important; }
+  .hms-invoice.t-Region {
+    width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important;
+    border:0 !important; border-radius:0 !important; box-shadow:none !important; overflow:visible !important;
+    background:#fff !important;
+  }
+  .hms-invoice .t-Region-body { margin:0 !important; padding:0 !important; background:#fff !important; }
+  .hms-invoice .hms-hero { max-width:none; margin:0; padding:0; border:0; border-radius:0; box-shadow:none; }
+  .hms-invoice-items.t-Region, .hms-invoice-summary.t-Region {
+    margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important;
+    box-shadow:none !important; overflow:visible !important; background:transparent !important;
+  }
+  .hms-invoice-items .t-Region-body, .hms-invoice-summary .t-Region-body {
+    margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
+  }
+  .hms-invoice table,
+  .hms-invoice-items table.t-Report-report { margin:8px 0; }
+  .hms-invoice table thead,
+  .hms-invoice-items table.t-Report-report thead { display:table-header-group; }
+  .hms-invoice table tr,
+  .hms-invoice .hms-kpi,
+  .hms-invoice .hms-note,
+  .hms-invoice-items table.t-Report-report tr { break-inside:avoid; page-break-inside:avoid; }
+  .hms-invoice .hms-kpi-row,
+  .hms-invoice-summary .hms-kpi-row { grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; margin:8px 0; }
+  .hms-invoice .hms-kpi,
+  .hms-invoice-summary .hms-kpi { min-height:0; padding:6px 8px; box-shadow:none !important; }
+  .hms-invoice .hms-kpi .hms-kpi-val,
+  .hms-invoice-summary .hms-kpi .hms-kpi-val { font-size:.86rem; }
+}
