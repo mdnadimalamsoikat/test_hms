@@ -59,7 +59,7 @@ SELECT BILL_NO, BILL_TYPE, BILL_DATE, PATIENT_ID, MRN, PATIENT_NAME, GROSS_AMOUN
 |---|---|---|
 | Banner | 12 | Existing bill/patient/date fields + status badge; Standard region, CSS Classes `hms-bill-banner` |
 | Summary | 12 | Static Content with five KPI cards; region CSS Classes `hms-bill-summary` |
-| Items | 12 | Classic Report (full-width, readable amounts) |
+| Items | 12 | Classic Report; region CSS Classes `hms-wide`; Layout → Column Span `12` |
 | Add Item | 8 | Form items |
 | Payment | 4 | Payment items |
 | Receipts | 12 | Payment history |
@@ -69,6 +69,8 @@ SELECT BILL_NO, BILL_TYPE, BILL_DATE, PATIENT_ID, MRN, PATIENT_NAME, GROSS_AMOUN
 SELECT BILL_DTL_ID, SERVICE_DATE, ITEM_DESC, REF_TYPE, QUANTITY, UNIT_PRICE, DISCOUNT_AMOUNT, NET_AMOUNT
   FROM HMS_BILLING_DTL WHERE BILL_ID = :P71_BILL_ID AND IS_ACTIVE = 'Y' ORDER BY BILL_DTL_ID
 ```
+Page Designer → Rendering tree → **Bill Items** Classic Report region select → Property Editor → **Appearance → CSS Classes** = `hms-wide` (no dot; keep Static ID `bill_items` unchanged). Layout → **Column Span = 12**. `hms-wide` widens the Classic Report table inside its region; Column Span makes the region itself use the full page row. Just adding the CSS class cannot expand a region still set to Span 8.
+
 Sum on NET_AMOUNT. Delete icon column (Authorization AUTH_SUPER): link `javascript:` → DA confirm → server `UPDATE HMS_BILLING_DTL SET IS_ACTIVE='N' WHERE BILL_DTL_ID=:P71_DEL_ID; PKG_BILLING.recalc_bill(:P71_BILL_ID);` → refresh.
 
 **Summary** region — Static Content, full-width. Page Designer → Rendering tree → click `Summary` region → Property Editor → Appearance → **CSS Classes** = `hms-bill-summary` (class name only; no leading dot). Keep the database-loaded `P71_GROSS`, `P71_DISC`, `P71_NET`, `P71_PAID`, `P71_DUE` values; this is display-only and must not calculate or update bill amounts. Replace the old summary table with:

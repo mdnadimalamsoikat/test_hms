@@ -218,3 +218,14 @@ a { color: #0b6e99; }
   .hms-invoice .hms-kpi .hms-kpi-val,
   .hms-invoice-summary .hms-kpi .hms-kpi-val { font-size:.86rem; }
 }
+
+/* ---- v13: wide Classic Report (set on the report region, not its Static ID) ---- */
+.hms-wide .t-Report-wrap,
+.hms-wide .t-Report,
+.hms-wide table.t-Report-report {
+  width:100% !important; max-width:none !important;
+}
+.hms-wide table.t-Report-report { table-layout:auto; }
+.hms-wide table.t-Report-report td:first-child,
+.hms-wide table.t-Report-report th:first-child { width:44px; text-align:center; }
+.hms-wide .t-Region-headerItems--buttons .t-Button { margin-left:8px; }
