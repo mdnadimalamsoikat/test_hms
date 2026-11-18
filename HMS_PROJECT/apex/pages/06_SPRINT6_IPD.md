@@ -423,20 +423,113 @@ A successful admission is a real database write: it creates an IPD bill and chan
 6. If any submit returns an error or the destination/status is unexpected, save the exact APEX message and screenshot. Do not click Admit again until checking the patient's admission and bed status in Toad.
 
 ---
-## PAGE 42 — Current Inpatients
-Interactive Report 42 on `VW_IPD_CURRENT_PATIENTS WHERE BRANCH_ID=:G_BRANCH_ID`
-Columns: ADMISSION_NO, ADMISSION_DATE, STAY_DAYS, MRN, PATIENT_NAME, GENDER, WARD_NAME, BED_NO, DOCTOR_NAME, BILL_AMOUNT, PAID_AMOUNT, DUE_AMOUNT, ADVANCE_BALANCE
-- DUE_AMOUNT > ADVANCE_BALANCE → red highlight (Actions ▸ Format ▸ Highlight, condition expression)
-- Control break WARD_NAME (default saved)
-- **Actions column** (24.2): add virtual column `ACTIONS` → Type *Link* with HTML `<button class="t-Button t-Button--small js-menuButton" data-menu="adm_menu_#ADMISSION_ID#">⋮</button>` — simpler: 4 link icon columns:
-  | Column (SQL: NULL AS ...) | Icon | Target |
-  |---|---|---|
-  | CHART | fa-heartbeat | 43 `P43_ADMISSION_ID=#ADMISSION_ID#` |
-  | MEDS | fa-medkit | 44 |
-  | BILL | fa-money | 71 `P71_BILL_ID` = `PKG_IPD.get_ipd_bill_id(ADMISSION_ID)` (add as SQL column IPD_BILL_ID) |
-  | TRANSFER | fa-exchange | 421 |
-  | DISCHARGE | fa-sign-out | 45 |
-Authorization AUTH_IPD.
+## PAGE 42 — Current Inpatients | Census Control Desk
+**Purpose:** Show who is admitted, where they are, and whether their bill needs attention. Page 41 answers “which beds are free?” with a spatial bed map; Page 42 answers “which patients need attention?” with a searchable, table-first census. **Do not repeat Page 41's bed-card grid.** Use a compact overview, a horizontal filter bar, and one wide Classic Report. Do not use an Interactive Grid.
+
+### 1. Check the shared style files
+The screenshot of Page 41 still shows the Redwood title strip and an unstyled note, so the project's shared CSS may not be active or may be stale. Before judging Page 42's appearance, App Builder → App 101 → Shared Components → **Static Application Files** → replace both `hms.css` and `hms.min.css` from `HMS_PROJECT/apex/static/`, keeping the names/paths already used by the application. Then Run Page 42 and press **Ctrl+F5**. This page uses the existing `.hms-badge` and `.hms-due-bad` styles; the full-width report uses the APEX page grid, so no new global CSS is required for this layout. Do not redesign Page 41 as part of this step.
+
+### 2. Create or update Page 42
+If Page 42 exists, update it—do not create a duplicate. Otherwise App Builder → App 101 → **Create Page** → **Blank Page**; Page Number `42`, Name `Current Inpatients`, Page Mode `Normal`. Select Page 42 in Page Designer → Property Editor → Security:
+- Authorization Scheme: `AUTH_IPD`
+- Page Access Protection: `Arguments Must Have Checksum`
+
+Create three regions in this order: `Census Snapshot`, `Census Filters`, `Inpatient Roster`. Keep the normal page title; do not add a second title region. The snapshot and filter regions are small control surfaces; the roster is the main content.
+
+### 3. Add the branch-wide census snapshot
+Create `Census Snapshot` as a **Classic Report** with this SQL Query:
+```
+SELECT COUNT(*) AS ACTIVE_INPATIENTS,
+       NVL(SUM(CASE WHEN TRUNC(ADMISSION_DATE) = TRUNC(SYSDATE)
+                    THEN 1 ELSE 0 END), 0) AS ADMITTED_TODAY,
+       NVL(SUM(CASE WHEN ADMISSION_STATUS = 'DISCHARGE_INITIATED'
+                    THEN 1 ELSE 0 END), 0) AS DISCHARGE_IN_PROGRESS,
+       NVL(SUM(NVL(DUE_AMOUNT, 0)), 0) AS TOTAL_DUE
+  FROM VW_IPD_CURRENT_PATIENTS
+ WHERE BRANCH_ID = :G_BRANCH_ID
+```
+Select the region → Property Editor search `Report Template` → choose `Value Attribute Pairs`. Set its headings to `Active Inpatients`, `Admitted Today`, `Discharge in Progress`, and `Outstanding Balance (Tk)`. Select `TOTAL_DUE` in the Rendering tree, use Property Editor Filter Properties to search `Format Mask`, and set `FM999G999G999G990D00`. These numbers are branch-wide; they do not change when the roster filters below are used.
+
+Add button `NEW_ADMISSION` to this region's header (Page Designer Gallery → Buttons). Set Label `New Admission`, Position `Edit` (top-right of the region header), Action `Redirect to Page in this Application`, Target Page `40`, Clear Cache `40`, and Security → Authorization Scheme `AUTH_IPD_ADD`. This is the primary action; do not put it at the bottom-right `Create` position or beside the page title.
+
+### 4. Build the horizontal filter bar
+Create `Census Filters` as **Static Content**, Template `Standard`. Add these items in the Rendering tree:
+
+- **P42_SEARCH** — Type `Text Field`; Label `Search by patient, MRN, or admission`; Validation → Value Required `No`; Security → Session State Protection `Unrestricted`; Maximum Length `100`.
+- **P42_WARD_NAME** — Type `Select List`; Label `Ward`; Validation → Value Required `No`; Security → Session State Protection `Unrestricted`; LOV Type `SQL Query`:
+```
+SELECT WARD_NAME AS D, WARD_NAME AS R
+  FROM (
+        SELECT DISTINCT WARD_NAME
+          FROM VW_IPD_CURRENT_PATIENTS
+         WHERE BRANCH_ID = :G_BRANCH_ID
+       )
+ ORDER BY D
+```
+Set Display Null Value `Yes`; Null Display Value `All wards`.
+- **P42_DUE_ONLY** — Type `Select List`; Label `Balance`; Validation → Value Required `No`; Security → Session State Protection `Unrestricted`; LOV Type `Static Values`:
+```
+All balances;ALL
+Outstanding due only;DUE
+```
+Set Default Type `Static`; Default `ALL`.
+
+On the Page Designer **Layout** tab set `P42_SEARCH` → Start New Row `Yes`, Column `1`, Column Span `5`; `P42_WARD_NAME` → Start New Row `No`, Column `6`, Column Span `4`; `P42_DUE_ONLY` → Start New Row `No`, Column `10`, Column Span `3`. These 12 columns form one filter row on desktop and stack on narrow screens. Add button `APPLY_FILTERS` to the filter region header: Position `Edit`, Label `Apply`, Action `Submit Page`, Button Template `Hot`, Icon `fa-filter`. Submitting this button sends the filter values and refreshes the report; it does not create or change an admission.
+
+### 5. Create the wide, compact inpatient roster
+Create `Inpatient Roster` as a **Classic Report** (not Interactive Report or Interactive Grid). In the Page Designer **Layout** tab set Start New Row `Yes`, Column `1`, Column Span `12` so the roster gets the whole row. Do **not** add the `hms-wide` class here: its first-column rule is intended for a small icon column and would make the admission number too narrow. Source → SQL Query:
+```
+SELECT ADMISSION_ID,
+       ADMISSION_NO,
+       TO_CHAR(ADMISSION_DATE, 'DD Mon YYYY HH:MI AM') AS ADMITTED_AT,
+       STAY_DAYS,
+       APEX_ESCAPE.HTML(PATIENT_NAME) ||
+         '<br><small>MRN ' || APEX_ESCAPE.HTML(MRN) ||
+         ' · ' || APEX_ESCAPE.HTML(GENDER) || '</small>' AS PATIENT_INFO,
+       APEX_ESCAPE.HTML(WARD_NAME) ||
+         '<br><strong>Bed ' || APEX_ESCAPE.HTML(TO_CHAR(BED_NO)) ||
+         '</strong>' AS BED_INFO,
+       APEX_ESCAPE.HTML(DOCTOR_NAME) AS DOCTOR_INFO,
+       '<span class="hms-badge ' ||
+         CASE WHEN ADMISSION_STATUS = 'ADMITTED' THEN 'ADMITTED' ELSE 'WAITING' END ||
+         '">' || APEX_ESCAPE.HTML(REPLACE(ADMISSION_STATUS, '_', ' ')) ||
+         '</span>' AS STATUS_BADGE,
+       '<small>Bill Tk ' ||
+         TO_CHAR(NVL(BILL_AMOUNT, 0), 'FM999G999G999G990D00') ||
+         ' · Paid Tk ' ||
+         TO_CHAR(NVL(PAID_AMOUNT, 0), 'FM999G999G999G990D00') ||
+         '</small><br>' ||
+         CASE WHEN NVL(DUE_AMOUNT, 0) > 0 THEN
+           '<span class="hms-due-bad">Due Tk ' ||
+           TO_CHAR(NVL(DUE_AMOUNT, 0), 'FM999G999G999G990D00') || '</span>'
+         ELSE '<span class="hms-badge PAID">No due</span>'
+         END ||
+         '<br><small>Advance Tk ' ||
+         TO_CHAR(NVL(ADVANCE_BALANCE, 0), 'FM999G999G999G990D00') ||
+         '</small>' AS FINANCIALS
+  FROM VW_IPD_CURRENT_PATIENTS
+ WHERE BRANCH_ID = :G_BRANCH_ID
+   AND (:P42_WARD_NAME IS NULL OR WARD_NAME = :P42_WARD_NAME)
+   AND (:P42_SEARCH IS NULL
+        OR UPPER(MRN) LIKE '%' || UPPER(TRIM(:P42_SEARCH)) || '%'
+        OR UPPER(PATIENT_NAME) LIKE '%' || UPPER(TRIM(:P42_SEARCH)) || '%'
+        OR UPPER(ADMISSION_NO) LIKE '%' || UPPER(TRIM(:P42_SEARCH)) || '%')
+   AND (NVL(:P42_DUE_ONLY, 'ALL') = 'ALL' OR NVL(DUE_AMOUNT, 0) > 0)
+ ORDER BY WARD_NAME, ADMISSION_DATE DESC
+```
+For the report columns, use headings `Admission`, `Admitted`, `Patient / MRN`, `Ward / Bed`, `Consultant`, `Stay (days)`, `Status`, and `Bill Snapshot`. For `PATIENT_INFO`, `BED_INFO`, `STATUS_BADGE`, and `FINANCIALS`, set Escape Special Characters `No`—the SQL uses `APEX_ESCAPE.HTML` for database text before adding markup. In Rendering → `Inpatient Roster` → Columns → `ADMISSION_ID`, set Identification → Type `Hidden` so the ID remains available to the link but is not shown.
+
+Make `ADMISSION_NO` the single primary row link: select its report column → Identification → Type `Link`; in Link, click `No Link Defined` to open Link Builder. Set Type `Page in this application`, Page `43`, Set Items Name `P43_ADMISSION_ID`, Value `#ADMISSION_ID#`, and Clear Cache `43`. Use this APEX target builder so the checksum is generated. Page 43 contains the secondary actions (medication, bill, transfer, and discharge); keeping them off this census table makes the roster easier to scan. In the report's no-data setting, set the message to `No current inpatients match these filters.`
+
+### 6. Test the new page
+Run as an IPD user and verify:
+1. The snapshot totals reflect only `:G_BRANCH_ID`; Active Inpatients matches the unfiltered roster count.
+2. Search by a test patient's MRN and choose a Ward; Apply filters and confirm only matching rows remain. `Outstanding due only` should show rows where `DUE_AMOUNT > 0`.
+3. The table is read-only. Patient names, bed location, status, and financials are easy to scan; there are no bed cards or Interactive Grid.
+4. Click an admission number. Page 43 must open with that row's `P43_ADMISSION_ID`; the chart must show the same patient and admission.
+5. If styles still look like the default Redwood page, stop and re-check that both shared CSS files were replaced and Ctrl+F5 was used.
+
+---
 
 ## PAGE 421 — Bed Transfer (Modal 520)
 Items: P421_ADMISSION_ID (hidden) · P421_CURRENT (Display: current ward/bed) · P421_BED_ID (Popup, available beds) · P421_REASON (Required).
